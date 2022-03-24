@@ -18,7 +18,7 @@
     <div class="page-logo m-0 w-100 align-items-center justify-content-center rounded border-bottom-left-radius-0 border-bottom-right-radius-0 px-4">
         <a href="javascript:void(0)" class="page-logo-link press-scale-down d-flex align-items-center">
             <%--            <img src="<c:url value='/images/end_logo.gif'/>" alt="logo" aria-roledescription="logo">--%>
-            <span class="page-logo-text mr-1">우성-MES</span>
+            <span class="page-logo-text mr-1">한국C&S-MES</span>
             <i class="fal fa-angle-down d-inline-block ml-1 fs-lg color-primary-300"></i>
         </a>
     </div>
@@ -62,7 +62,7 @@
         </form:form>
     </div>
     <div class="blankpage-footer text-center">
-        <a href="javascript:alert('서비스 준비중입니다.');"><strong><spring:message code="button.login.ent"/></strong></a>
+<%--        <a href="javascript:alert('서비스 준비중입니다.');"><strong><spring:message code="button.login.ent"/></strong></a>--%>
     </div>
 </div>
 
