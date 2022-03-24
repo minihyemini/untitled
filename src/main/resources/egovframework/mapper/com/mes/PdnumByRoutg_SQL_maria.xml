@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+		"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="jisungsoft.com.repository.mes.PdnumByRoutgMapper">
+
+	<sql id="searchPdnumWithCount">
+		<if test="@egovframework.com.cmm.util.EgovMybaitsUtil@isNotEmpty(searchKeyword)">
+			<if test="searchCondition eq 0">
+				AND (
+				PDN.PDNUM_NUM LIKE CONCAT ('%', #{searchKeyword},'%')
+				OR
+				PDN.PDNUM_NM LIKE CONCAT ('%', #{searchKeyword},'%')
+				)
+			</if>
+			<if test="searchCondition eq 1">
+				AND  PDN.PDNUM_NUM LIKE CONCAT ('%', #{searchKeyword},'%')
+			</if>
+			<if test="searchCondition eq 2">
+				AND  PDN.PDNUM_NM LIKE CONCAT ('%', #{searchKeyword},'%')
+			</if>
+		</if>
+	</sql>
+
+	<select id="selectRoutgByPdnumAllList" resultType="Pdnumbyroutg">
+		SELECT PBR_ID
+			, PBR.PM_CODE
+			, PBR.RT_CODE
+            , PBR.PM_SEQ
+            , PBR.PBR_PFMPOINT
+            , PBR.PBR_READTM
+            , PBR.PBR_SMPREADTM
+            , PBR.PBR_DESC
+            , PBR.PDNUM_ID
+		FROM
+		    TB_PDNUMBYROUTG PBR
+		WHERE
+			PBR.PDNUM_ID = #{pdnumId}
+	</select>
+
+	<select id="selectPdnumWithCountAllList" resultType="Pdnumbyroutg">
+		SELECT DISTINCT PDN.PDNUM_ID
+			, PDN.PDNUM_NUM
+			, PDN.PDNUM_NM
+			, (SELECT COUNT(1) FROM TB_PDNUMBYROUTG WHERE PDNUM_ID = PDN.PDNUM_ID) as pbrCnt
+		FROM
+        	TB_PDNUM PDN
+		WHERE
+			1 = 1
+		<include refid="searchPdnumWithCount"/>
+		<if test="pdnumNum != null and pdnumNum neq ''">
+			AND PDN.PDNUM_NUM = #{pdnumNum}
+		</if>
+		<if test="pdnumNm != null and pdnumNm neq ''">
+			AND PDN.PDNUM_NM = #{pdnumNm}
+		</if>
+	</select>
+
+	<select id="selectPdnumByRoutgDetail" resultType="Pdnumbyroutg">
+		SELECT PBR.PBR_ID
+		     , PDN.PDNUM_ID
+			 , PDN.PDNUM_NUM
+			 , PDN.PDNUM_NM
+			 , (SELECT COUNT(1) FROM TB_PDNUMBYROUTG WHERE PDNUM_ID = PDN.PDNUM_ID) as pbrCnt
+		FROM
+			TB_PDNUM PDN LEFT JOIN TB_PDNUMBYROUTG PBR ON PDN.PDNUM_ID = PBR.PDNUM_ID
+		WHERE
+			PBR.PBR_ID = #{pbrId}
+	</select>
+
+	<insert id="insertPdnumbyroutg">
+		<selectKey keyProperty="pbrId" resultType="java.lang.Integer" order="BEFORE">
+			SELECT IFNULL(MAX(PBR_ID),0)+1 AS PBR_ID  FROM TB_PDNUMBYROUTG
+		</selectKey>
+
+		INSERT INTO TB_PDNUMBYROUTG
+		(
+			PBR_ID
+			, RT_CODE
+			, PM_CODE
+			, PM_SEQ
+			, PBR_PFMPOINT
+			, PBR_READTM
+			, PBR_SMPREADTM
+			, PBR_DESC
+			, PDNUM_ID
+		) VALUES (
+			#{pbrId}
+			, #{rtCode}
+			, #{pmCode}
+			, #{pmSeq}
+			, #{pbrPfmpoint}
+			, #{pbrReadtm}
+			, #{pbrSmpreadtm}
+			, #{pbrDesc}
+			, #{pdnumId}
+		)
+	</insert>
+
+	<update id="updatePdnumbyroutg">
+		UPDATE
+		    TB_PDNUMBYROUTG
+		SET
+			  RT_CODE = #{rtCode}
+			  , PM_CODE = #{pmCode}
+			  , PM_SEQ = #{pmSeq}
+			  , PBR_PFMPOINT = #{pbrPfmpoint}
+			  , PBR_READTM = #{pbrReadtm}
+			  , PBR_SMPREADTM = #{pbrSmpreadtm}
+			  , PBR_DESC = #{pbrDesc}
+			  , PDNUM_ID = #{pdnumId}
+		WHERE
+			PBR_ID = #{pbrId}
+	</update>
+
+	<delete id="deletePdnumbyroutg">
+		DELETE FROM
+		    TB_PDNUMBYROUTG
+		WHERE
+			PBR_ID = #{pbrId}
+	</delete>
+
+	<delete id="deletePdnumbyPdNum">
+		DELETE FROM
+			TB_PDNUMBYROUTG
+		WHERE
+			PDNUM_ID = #{pdnumId}
+	</delete>
+</mapper>

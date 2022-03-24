@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="PopupManageDAO">
+
+    <sql id="searchPopup">
+        <if test="@egovframework.com.cmm.util.EgovMybaitsUtil@isNotEmpty(searchKeyword)">
+            <if test="searchCondition eq 0">
+                AND  (POPUP_SJ_NM LIKE CONCAT ('%', #{searchKeyword},'%') OR
+                      POPUP_CN LIKE CONCAT ('%', #{searchKeyword},'%'))
+            </if>
+            <if test="searchCondition eq 1">
+                AND  POPUP_SJ_NM LIKE CONCAT ('%', #{searchKeyword},'%')
+            </if>
+            <if test="searchCondition eq 2">
+                AND  POPUP_CN LIKE CONCAT ('%', #{searchKeyword},'%')
+            </if>
+        </if>
+    </sql>
+
+    <select id="selectPopupList" parameterType="PopupVO" resultType="egovMap">
+        SELECT
+                POPUP_ID
+             ,  POPUP_SJ_NM
+             ,  POPUP_CN
+             ,  ATCH_FILE_ID
+             ,  FILE_URL
+             ,  POPUP_WIDTH_LC
+             ,  POPUP_WIDTH_SIZE
+             ,  DATE_FORMAT(NTCE_BGNDE, '%Y-%m-%d') as NTCE_BGNDE
+             ,  DATE_FORMAT(NTCE_ENDDE, '%Y-%m-%d') as NTCE_ENDDE
+             ,  STOPVEW_SETUP_AT
+             ,  NTCE_AT
+             ,  POPUP_VRTICL_LC
+             ,  POPUP_VRTICL_SIZE
+             ,  DATE_FORMAT(FRST_REGIST_PNTTM, '%Y-%m-%d') as FRST_REGIST_PNTTM
+             ,  usr.USER_NM as FRST_REGISTER_NM
+          FROM
+                TB_POPUPMANAGE pop
+          LEFT  JOIN ( SELECT  ESNTL_ID, USER_ID, USER_NM
+                         FROM  VIEW_USERMASTER ) usr
+            ON  pop.FRST_REGISTER_ID = usr.ESNTL_ID
+         WHERE  1 = 1
+        <include refid="searchPopup"/>
+        ORDER BY POPUP_ID
+        LIMIT #{recordCountPerPage} OFFSET #{firstIndex}
+    </select>
+
+    <select id="selectPopupNPList" parameterType="PopupVO" resultType="egovMap">
+        SELECT
+                POPUP_ID
+             ,  POPUP_SJ_NM
+             ,  POPUP_CN
+             ,  ATCH_FILE_ID
+             ,  FILE_URL
+             ,  POPUP_WIDTH_LC
+             ,  POPUP_WIDTH_SIZE
+             ,  DATE_FORMAT(NTCE_BGNDE, '%Y-%m-%d') as NTCE_BGNDE
+             ,  DATE_FORMAT(NTCE_ENDDE, '%Y-%m-%d') as NTCE_ENDDE
+             ,  STOPVEW_SETUP_AT
+             ,  NTCE_AT
+             ,  POPUP_VRTICL_LC
+             ,  POPUP_VRTICL_SIZE
+             ,  DATE_FORMAT(FRST_REGIST_PNTTM, '%Y-%m-%d') as FRST_REGIST_PNTTM
+             ,  usr.USER_NM as FRST_REGISTER_NM
+          FROM
+                TB_POPUPMANAGE pop
+          LEFT  JOIN ( SELECT  ESNTL_ID, USER_ID, USER_NM
+                         FROM  VIEW_USERMASTER ) usr
+            ON  pop.FRST_REGISTER_ID = usr.ESNTL_ID
+         WHERE  1 = 1
+        <include refid="searchPopup"/>
+         ORDER  BY POPUP_ID
+    </select>
+
+    <select id="selectPopupDetail" parameterType="PopupVO" resultType="PopupVO">
+        SELECT
+                POPUP_ID
+             ,  POPUP_SJ_NM
+             ,  POPUP_CN
+             ,  ATCH_FILE_ID
+             ,  FILE_URL
+             ,  POPUP_WIDTH_LC
+             ,  POPUP_WIDTH_SIZE
+             ,  DATE_FORMAT(NTCE_BGNDE, '%Y-%m-%d') as NTCE_BGNDE
+             ,  DATE_FORMAT(NTCE_ENDDE, '%Y-%m-%d') as NTCE_ENDDE
+             ,  STOPVEW_SETUP_AT
+             ,  NTCE_AT
+             ,  POPUP_VRTICL_LC
+             ,  POPUP_VRTICL_SIZE
+             ,  (SELECT FILE_SN FROM TB_FILEDETAIL WHERE ATCH_FILE_ID = pop.ATCH_FILE_ID LIMIT 1) as FILE_SN
+          FROM  TB_POPUPMANAGE pop
+          LEFT  JOIN ( SELECT  ESNTL_ID, USER_ID, USER_NM
+                         FROM  VIEW_USERMASTER ) usr
+            ON  pop.FRST_REGISTER_ID = usr.ESNTL_ID
+         WHERE  POPUP_ID = #{popupId}
+    </select>
+
+    <select id="selectPopupListCnt" parameterType="PopupVO" resultType="java.lang.Integer">
+        SELECT  COUNT(POPUP_ID)
+          FROM  TB_POPUPMANAGE pop
+          LEFT  JOIN ( SELECT  ESNTL_ID, USER_ID, USER_NM
+                         FROM  VIEW_USERMASTER ) usr
+            ON  pop.FRST_REGISTER_ID = usr.ESNTL_ID
+         WHERE  1 = 1
+        <include refid="searchPopup"/>
+    </select>
+
+    <insert id="insertPopup">
+        INSERT INTO TB_POPUPMANAGE
+        (
+           POPUP_ID
+        ,  POPUP_SJ_NM
+        ,  POPUP_CN
+        ,  ATCH_FILE_ID
+        ,  FILE_URL
+        ,  POPUP_WIDTH_LC
+        ,  POPUP_WIDTH_SIZE
+        ,  NTCE_BGNDE
+        ,  NTCE_ENDDE
+        ,  STOPVEW_SETUP_AT
+        ,  NTCE_AT
+        ,  POPUP_VRTICL_LC
+        ,  POPUP_VRTICL_SIZE
+        ,  FRST_REGISTER_ID
+        ,  FRST_REGIST_PNTTM
+        ,  LAST_UPDUSR_ID
+        ,  LAST_UPDT_PNTTM
+        )
+        VALUES
+        (
+           #{popupId}
+        ,  #{popupSjNm}
+        ,  #{popupCn}
+        ,  #{atchFileId}
+        ,  #{fileUrl}
+        ,  #{popupWidthLc}
+        ,  #{popupWidthSize}
+        ,  #{ntceBgnde}
+        ,  #{ntceEndde}
+        ,  #{stopvewSetupAt}
+        ,  #{ntceAt}
+        ,  #{popupVrticlLc}
+        ,  #{popupVrticlSize}
+        ,  #{frstRegisterId}
+        ,  sysdate()
+        ,  #{frstRegisterId}
+        ,  sysdate()
+        )
+    </insert>
+
+    <update id="updatePopup">
+       UPDATE  TB_POPUPMANAGE
+          SET  POPUP_SJ_NM       = #{popupSjNm}
+            ,  POPUP_CN          = #{popupCn}
+            ,  ATCH_FILE_ID      = #{atchFileId}
+            ,  FILE_URL          = #{fileUrl}
+            ,  POPUP_WIDTH_LC    = #{popupWidthLc}
+            ,  POPUP_WIDTH_SIZE  = #{popupWidthSize}
+            ,  NTCE_BGNDE        = #{ntceBgnde}
+            ,  NTCE_ENDDE        = #{ntceEndde}
+            ,  STOPVEW_SETUP_AT  = #{stopvewSetupAt}
+            ,  NTCE_AT           = #{ntceAt}
+            ,  POPUP_VRTICL_LC   = #{popupVrticlLc}
+            ,  POPUP_VRTICL_SIZE = #{popupVrticlSize}
+            ,  LAST_UPDT_PNTTM    = sysdate()
+            ,  LAST_UPDUSR_ID     = #{lastUpdusrId}
+        WHERE  POPUP_ID = #{popupId}
+    </update>
+
+    <delete id="deletePopup">
+        DELETE
+          FROM  TB_POPUPMANAGE
+         WHERE  POPUP_ID = #{popupId}
+    </delete>
+</mapper>

@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="jisungsoft.com.repository.sym.MenuCreateMapper">
+
+    <sql id="searchMenuCreatList">
+        <if test="@egovframework.com.cmm.util.EgovMybaitsUtil@isNotEmpty(searchKeyword)">
+            <if test="searchCondition == 0">
+                AND
+                B.MENU_NM LIKE CONCAT('%' , #{searchKeyword}, '%')
+                OR
+                B.PROGRM_FILE_NM LIKE CONCAT('%' , #{searchKeyword}, '%')
+                OR
+                A.AUTHOR_CODE LIKE CONCAT('%' , #{searchKeyword}, '%')
+            </if>
+            <if test="searchCondition == 1">
+                AND
+                B.MENU_NM LIKE CONCAT('%' , #{searchKeyword}, '%')
+            </if>
+            <if test="searchCondition == 2">
+                AND
+                B.PROGRM_FILE_NM LIKE CONCAT('%' , #{searchKeyword}, '%')
+            </if>
+            <if test="searchCondition == 3">
+                AND
+                A.AUTHOR_CODE LIKE CONCAT('%' , #{searchKeyword}, '%')
+            </if>
+        </if>
+    </sql>
+
+    <select id="selectMenuCreatList" resultType="MenuCreat">
+        SELECT
+            B.MENU_NM,
+            B.PROGRM_FILE_NM,
+            B.MENU_CATEGORY,
+            B.MENU_NO,
+            B.MENU_DC,
+            A.AUTHOR_CODE,
+            A.MAPNG_CREAT_ID
+        FROM
+            TB_MENUCREATDTLS A
+        LEFT JOIN TB_MENUINFO B ON A.MENU_NO = B.MENU_NO
+        WHERE
+            A.MENU_NO <![CDATA[<>]]> 0
+            <include refid="searchMenuCreatList"/>
+        ORDER BY A.MENU_NO ASC, A.MENU_ORDR ASC
+        LIMIT #{recordCountPerPage} OFFSET #{firstIndex}
+    </select>
+
+    <select id="selectMenuCreatTotCnt" resultType="java.lang.Integer">
+        SELECT
+            COUNT(1)
+        FROM
+            (
+                SELECT
+                    B.MENU_NO
+                FROM
+                    TB_MENUCREATDTLS A
+                LEFT JOIN TB_MENUINFO B ON A.MENU_NO = B.MENU_NO
+                WHERE
+                    A.MENU_NO <![CDATA[<>]]> 0
+                <include refid="searchMenuCreatList"/>
+            ) AS cnt
+    </select>
+
+    <select id="selectMenuCreatAuthList" resultType="MenuCreat">
+        SELECT
+           MENU_NO,
+           AUTHOR_CODE,
+           MAPNG_CREAT_ID
+        FROM
+            TB_MENUCREATDTLS
+        WHERE
+            MENU_NO = #{menuNo}
+    </select>
+
+    <select id="selectMenuAuthList" resultType="MenuCreat">
+        SELECT
+            A.AUTHOR_CODE,
+            A.AUTHOR_NM,
+            A.AUTHOR_DC
+        FROM
+            TB_AUTHORINFO A
+    </select>
+
+    <insert id="insertMenuCreat">
+        INSERT INTO
+            TB_MENUCREATDTLS
+        (
+            MENU_NO,
+            AUTHOR_CODE,
+            MAPNG_CREAT_ID
+        ) VALUES (
+            #{menuNo},
+            #{authorCode},
+            #{mapngCreatId}
+        )
+    </insert>
+
+    <update id="updateMenuCreat">
+        UPDATE
+            TB_MENUCREATDTLS
+        SET
+            AUTHOR_CODE = #{authorCode},
+            MAPNG_CREAT_ID = #{mapngCreatId}
+        WHERE
+            MENU_NO = #{menuNo}
+    </update>
+
+    <delete id="deleteMenuCreat">
+        DELETE FROM
+            TB_MENUCREATDTLS
+        WHERE
+            MENU_NO = #{menuNo}
+    </delete>
+
+    <select id="selectMenuCreateCntByPk" resultType="java.lang.Integer">
+        SELECT
+            COUNT(*)
+        FROM
+            TB_MENUCREATDTLS
+        WHERE
+            MENU_NO = #{menuNo}
+    </select>
+
+</mapper>

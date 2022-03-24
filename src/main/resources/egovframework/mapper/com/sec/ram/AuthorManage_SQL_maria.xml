@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="jisungsoft.com.repository.sec.AuthorInfoMapper">
+
+    <select id="selectAuthorList" resultType="AuthorManage">
+        SELECT
+               AUTHOR_CODE, AUTHOR_NM, AUTHOR_DC, AUTHOR_CREAT_DE
+        FROM
+            TB_AUTHORINFO
+        WHERE 1=1
+        <if test="searchCondition == 1">
+            AND
+            AUTHOR_NM LIKE CONCAT('%' , #{searchKeyword}, '%')
+        </if>
+        ORDER BY AUTHOR_CREAT_DE DESC
+        LIMIT #{recordCountPerPage} OFFSET #{firstIndex}
+    </select>
+
+    <select id="selectAuthor" resultType="AuthorManageVO">
+        SELECT
+            AUTHOR_CODE, AUTHOR_NM, AUTHOR_DC, AUTHOR_CREAT_DE
+        FROM
+            TB_AUTHORINFO
+        WHERE
+            AUTHOR_CODE = #{authorCode}
+    </select>
+    
+    <select id="selectAuthorListTotCnt" resultType="java.lang.Integer">
+        SELECT
+            COUNT(*) totcnt
+        FROM
+            TB_AUTHORINFO
+        WHERE
+            1=1
+        <if test="searchCondition == 1">
+            AND
+            AUTHOR_NM LIKE CONCAT('%' , #{searchKeyword}, '%')
+        </if>
+    </select>
+    
+    <select id="selectAuthorAllList" resultType="AuthorManage">
+        SELECT
+            AUTHOR_CODE, AUTHOR_NM, AUTHOR_DC, AUTHOR_CREAT_DE
+        FROM
+            TB_AUTHORINFO
+    </select>
+
+    <insert id="insertAuthor">
+        INSERT INTO
+            TB_AUTHORINFO
+        (
+            AUTHOR_CODE,
+            AUTHOR_NM,
+            AUTHOR_DC,
+            AUTHOR_CREAT_DE
+        ) VALUES (
+            #{authorCode},
+            #{authorNm},
+            #{authorDc},
+            now()
+        )
+    </insert>
+
+    <update id="updateAuthor">
+        UPDATE
+            TB_AUTHORINFO
+        SET
+            AUTHOR_NM = #{authorNm}
+          , AUTHOR_DC = #{authorDc}
+        WHERE
+            AUTHOR_CODE = #{authorCode}
+    </update>
+
+    <delete id="deleteAuthor">
+        DELETE FROM
+            TB_AUTHORINFO
+        WHERE
+            AUTHOR_CODE = #{authorCode}
+    </delete>
+</mapper>

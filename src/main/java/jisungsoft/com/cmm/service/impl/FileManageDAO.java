@@ -1,0 +1,176 @@
+package jisungsoft.com.cmm.service.impl;
+
+import egovframework.com.cmm.service.impl.EgovComAbstractDAO;
+import jisungsoft.com.cmm.FileVO;
+import org.springframework.stereotype.Repository;
+
+import java.util.Iterator;
+import java.util.List;
+
+@Repository("fileMngDAO")
+public class FileManageDAO extends EgovComAbstractDAO {
+
+    private final String NAME_SPACE = "FileManageDAO";
+    /**
+     * 여러 개의 파일에 대한 정보(속성 및 상세)를 등록한다.
+     *
+     * @param fileList
+     * @return
+     * @throws Exception
+     */
+    public String insertFileInfs(List<?> fileList) throws Exception {
+        FileVO vo = (FileVO) fileList.get(0);
+        String atchFileId = vo.getAtchFileId();
+
+        insert(NAME_SPACE + ".insertFileMaster", vo);
+
+        Iterator<?> iter = fileList.iterator();
+        while (iter.hasNext()) {
+            vo = (FileVO) iter.next();
+
+            insert(NAME_SPACE + ".insertFileDetail", vo);
+        }
+
+        return atchFileId;
+    }
+
+    /**
+     * 하나의 파일에 대한 정보(속성 및 상세)를 등록한다.
+     *
+     * @param vo
+     * @throws Exception
+     */
+    public void insertFileInf(FileVO vo) throws Exception {
+        insert(NAME_SPACE + ".insertFileMaster", vo);
+        insert(NAME_SPACE + ".insertFileDetail", vo);
+    }
+
+    /**
+     * 여러 개의 파일에 대한 정보(속성 및 상세)를 수정한다.
+     *
+     * @param fileList
+     * @throws Exception
+     */
+    public void updateFileInfs(List<?> fileList) throws Exception {
+        FileVO vo;
+        Iterator<?> iter = fileList.iterator();
+        while (iter.hasNext()) {
+            vo = (FileVO) iter.next();
+            insert(NAME_SPACE + ".insertFileDetail", vo);
+        }
+    }
+
+    /**
+     * 여러 개의 파일을 삭제한다.
+     *
+     * @param fileList
+     * @throws Exception
+     */
+    public void deleteFileInfs(List<?> fileList) throws Exception {
+        Iterator<?> iter = fileList.iterator();
+        FileVO vo;
+        while (iter.hasNext()) {
+            vo = (FileVO) iter.next();
+
+            delete(NAME_SPACE + ".deleteFileDetail", vo);
+        }
+    }
+
+    /**
+     * 하나의 파일을 삭제한다.
+     *
+     * @param fvo
+     * @throws Exception
+     */
+    public void deleteFileInf(FileVO fvo) throws Exception {
+        delete(NAME_SPACE + ".deleteFileDetail", fvo);
+    }
+
+    /**
+     * 파일에 대한 목록을 조회한다.
+     *
+     * @param vo
+     * @return
+     * @throws Exception
+     */
+    @SuppressWarnings("unchecked")
+    public List<FileVO> selectFileInfs(FileVO vo) throws Exception {
+        return selectList(NAME_SPACE + ".selectFileList", vo);
+    }
+
+    /**
+     * 파일 구분자에 대한 최대값을 구한다.
+     *
+     * @param fvo
+     * @return
+     * @throws Exception
+     */
+    public int getMaxFileSN(FileVO fvo) throws Exception {
+        return (Integer) selectOne(NAME_SPACE + ".getMaxFileSN", fvo);
+    }
+
+    /**
+     * 파일에 대한 상세정보를 조회한다.
+     *
+     * @param fvo
+     * @return
+     * @throws Exception
+     */
+    public FileVO selectFileInf(FileVO fvo) throws Exception {
+        return (FileVO) selectOne(NAME_SPACE + ".selectFileInf", fvo);
+    }
+
+    /**
+     * 전체 파일을 삭제한다.
+     *
+     * @param fvo
+     * @throws Exception
+     */
+    public void deleteAllFileInf(FileVO fvo) throws Exception {
+        update(NAME_SPACE + ".deleteCOMTNFILE", fvo);
+    }
+
+    /**
+     * 파일명 검색에 대한 목록을 조회한다.
+     *
+     * @param fvo
+     * @return
+     * @throws Exception
+     */
+    @SuppressWarnings("unchecked")
+    public List<FileVO> selectFileListByFileNm(FileVO fvo) throws Exception {
+        return selectList(NAME_SPACE + ".selectFileListByFileNm", fvo);
+    }
+
+    /**
+     * 파일명 검색에 대한 목록 전체 건수를 조회한다.
+     *
+     * @param fvo
+     * @return
+     * @throws Exception
+     */
+    public int selectFileListCntByFileNm(FileVO fvo) throws Exception {
+        return (Integer) selectOne(NAME_SPACE + ".selectFileListCntByFileNm", fvo);
+    }
+
+    /**
+     * 이미지 파일에 대한 목록을 조회한다.
+     *
+     * @param vo
+     * @return
+     * @throws Exception
+     */
+    @SuppressWarnings("unchecked")
+    public List<FileVO> selectImageFileList(FileVO vo) throws Exception {
+        return selectList(NAME_SPACE + ".selectImageFileList", vo);
+    }
+
+    /**
+     * summernote 이미지 삭제
+     * @param vo
+     * @throws Exception
+     */
+    public void deleteSummernoteImage(FileVO vo) throws Exception{
+        delete(NAME_SPACE + ".deleteSummernoteImage", vo);
+    }
+}

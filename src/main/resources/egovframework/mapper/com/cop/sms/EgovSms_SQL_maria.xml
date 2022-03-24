@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="SmsDAO">
+    <sql id="searchSms">
+        <if test="@egovframework.com.cmm.util.EgovMybaitsUtil@isNotEmpty(searchKeyword)">
+            <if test="searchCondition eq 0">
+                AND  (REPLACE(RECPTN_TELNO,'-','') LIKE CONCAT ('%', #{searchKeyword},'%') OR
+                TRNSMIS_CN LIKE CONCAT ('%', #{searchKeyword},'%'))
+            </if>
+            <if test="searchCondition eq 1">
+                AND  REPLACE(RECPTN_TELNO,'-','') LIKE CONCAT ('%', #{searchKeyword},'%')
+            </if>
+            <if test="searchCondition eq 2">
+                AND  TRNSMIS_CN LIKE CONCAT ('%', #{searchKeyword},'%')
+            </if>
+        </if>
+        <if test="smsId != null and smsId neq ''">
+            AND  sms.SMS_ID = #{smsId}
+        </if>
+    </sql>
+
+    <select id="selectSmsInfs" parameterType="SmsVO" resultType="SmsVO">
+        SELECT  sms.SMS_ID
+             ,  TRNSMIS_TELNO
+             ,  TRNSMIS_CN
+             ,  TRNSMIS_CODE
+             ,  FRST_REGIST_PNTTM
+             ,  RECPTN_TELNO
+             ,  RESULT_CODE
+             ,  RESULT_MSSAGE
+          FROM  TB_SMS sms
+         INNER  JOIN TB_SMSRECPTN rep
+            ON  sms.SMS_ID = rep.SMS_ID
+         WHERE  1=1
+        <include refid="searchSms"/>
+         ORDER  BY FRST_REGIST_PNTTM DESC
+         LIMIT  #{recordCountPerPage} OFFSET #{firstIndex}
+    </select>
+
+    <select id="selectSmsInfsCnt" parameterType="SmsVO" resultType="java.lang.Integer">
+        SELECT  COUNT(*)
+          FROM  TB_SMS sms
+         INNER  JOIN TB_SMSRECPTN rep
+            ON  sms.SMS_ID = rep.SMS_ID
+         WHERE  1=1
+        <include refid="searchSms"/>
+    </select>
+
+    <insert id="insertSmsInf" parameterType="SmsVO">
+        INSERT INTO TB_SMS
+        (   SMS_ID
+        ,   TRNSMIS_TELNO
+        ,   TRNSMIS_CN
+        ,   TRNSMIS_CODE
+        ,   FRST_REGIST_PNTTM
+        )
+        VALUES
+        (
+            #{smsId}
+        ,   #{trnsmisTelno}
+        ,   #{trnsmisCn}
+        ,   #{trnsmisCode}
+        ,   SYSDATE()
+        )
+    </insert>
+
+    <insert id="insertSmsRecptnInf" parameterType="SmsVO">
+        INSERT INTO TB_SMSRECPTN
+        (   SMS_ID
+        ,   RECPTN_TELNO
+        ,   RESULT_CODE
+        ,   RESULT_MSSAGE
+        )
+        VALUES
+        (
+            #{smsId}
+        ,   #{recptnTelno}
+        ,   #{resultCode}
+        ,   #{resultMssage}
+        )
+    </insert>
+
+    <select id="selectSmsInf" parameterType="SmsVO" resultType="SmsVO">
+        SELECT  sms.SMS_ID
+             ,  TRNSMIS_TELNO
+             ,  TRNSMIS_CN
+             ,  TRNSMIS_CODE
+             ,  FRST_REGIST_PNTTM
+             ,  RECPTN_TELNO
+             ,  RESULT_CODE
+             ,  RESULT_MSSAGE
+          FROM  TB_SMS sms
+         INNER  JOIN TB_SMSRECPTN rep
+            ON  sms.SMS_ID = rep.SMS_ID
+         WHERE  1=1
+        <include refid="searchSms"/>
+    </select>
+
+    <select id="selectSmsRecptnInfs" parameterType="SmsVO" resultType="SmsVO">
+        SELECT  SMS_ID
+             ,  RECPTN_TELNO
+             ,  RESULT_CODE
+             ,  RESULT_MSSAGE
+          FROM  TB_SMS
+         WHERE  SMS_ID = #{smsId}
+    </select>
+
+    <select id="selectSmsAuthInf" parameterType="SmsVO" resultType="SmsVO">
+        SELECT
+            SMS_ID,
+            AUTH_KEY,
+            AUTH_AT
+        FROM
+            TB_SMSMBERAUTH
+        WHERE
+            SMS_ID = #{smsId}
+    </select>
+
+    <insert id="insertSmsAuth">
+        INSERT INTO TB_SMSMBERAUTH
+        (
+         SMS_ID,
+         AUTH_KEY,
+         AUTH_AT
+         ) VALUES (
+            #{smsId},
+            #{authKey},
+            #{authAt}
+         )
+    </insert>
+
+    <update id="updateSmsAuth">
+        UPDATE TB_SMSMBERAUTH
+        SET
+            AUTH_KEY = #{authKey},
+            AUTH_AT = #{authAt}
+        WHERE
+            SMS_ID = #{smsId}
+    </update>
+
+    <delete id="deleteSmsAuth">
+        DELETE FROM
+            TB_SMSMBERAUTH
+        WHERE
+            SMS_ID = #{smsId}
+    </delete>
+</mapper>

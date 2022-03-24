@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+		"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="jisungsoft.com.repository.mes.PdfciltsMapper">
+
+	<sql id="searchPdfcilts">
+		<if test="@egovframework.com.cmm.util.EgovMybaitsUtil@isNotEmpty(searchKeyword)">
+			<if test="searchCondition eq 0">
+				AND(
+					PDF.PDFCILTS_CODE LIKE CONCAT ('%', #{searchKeyword},'%')
+					OR
+					PDF.PDFCILTS_NM LIKE CONCAT ('%', #{searchKeyword},'%')
+				)
+			</if>
+			<if test="searchCondition eq 1">
+				AND
+				PDF.PDFCILTS_CODE LIKE CONCAT ('%', #{searchKeyword},'%')
+			</if>
+			<if test="searchCondition eq 2">
+				AND
+				PDF.PDFCILTS_NM LIKE CONCAT ('%', #{searchKeyword},'%')
+			</if>
+		</if>
+
+		<if test="useAt != null and useAt neq ''">
+			AND
+			PDF.USE_AT = #{useAt}
+		</if>
+	</sql>
+
+	<select id="selectPdfciltsAllList" resultType="Pdfcilts">
+		SELECT PDF.PDFCILTS_ID
+			, PDF.PDFCILTS_CODE
+			, PDF.PDFCILTS_NM
+			, PDF.PLC_DVCODE
+			, PDF.USE_AT
+			, PDF.FRST_REGIST_PNTTM
+			, PDF.FRST_REGISTER_ID
+			, PDF.LAST_UPDT_PNTTM
+			, PDF.LAST_UPDUSR_ID
+			, PDF.PDFCILTS_DC
+			, (SELECT USER_ID FROM view_usermaster usr WHERE usr.ESNTL_ID = PDF.FRST_REGISTER_ID) as FRST_REGISTER_USER_ID
+			, (SELECT USER_ID FROM view_usermaster usr WHERE usr.ESNTL_ID = PDF.LAST_UPDUSR_ID) as LAST_UPDUSR_USER_ID
+		FROM
+		    TB_PDFCILTS PDF
+		WHERE 1 = 1
+		<include refid="searchPdfcilts"/>
+		ORDER BY PDF.USE_AT DESC, PDF.PDFCILTS_CODE ASC, PDF.FRST_REGIST_PNTTM DESC
+	</select>
+
+	<select id="selectPdfciltsList" resultType="Pdfcilts">
+		SELECT PDF.PDFCILTS_ID
+			, PDF.PDFCILTS_CODE
+			, PDF.PDFCILTS_NM
+		    , PDF.PLC_DVCODE
+			, PDF.USE_AT
+			, PDF.FRST_REGIST_PNTTM
+			, PDF.FRST_REGISTER_ID
+			, PDF.LAST_UPDT_PNTTM
+			, PDF.LAST_UPDUSR_ID
+			, PDF.PDFCILTS_DC
+			, (SELECT USER_ID FROM view_usermaster usr WHERE usr.ESNTL_ID = PDF.FRST_REGISTER_ID) as FRST_REGISTER_USER_ID
+			, (SELECT USER_ID FROM view_usermaster usr WHERE usr.ESNTL_ID = PDF.LAST_UPDUSR_ID) as LAST_UPDUSR_USER_ID
+		FROM
+			TB_PDFCILTS PDF
+		WHERE 1 = 1
+			<include refid="searchPdfcilts"/>
+		ORDER BY PDF.USE_AT DESC, PDF.PDFCILTS_CODE ASC, PDF.FRST_REGIST_PNTTM DESC
+		LIMIT  #{recordCountPerPage} OFFSET #{firstIndex}
+	</select>
+
+	<select id="selectPdfciltsListCnt" resultType="java.lang.Integer">
+		SELECT COUNT(1) FROM (
+			SELECT
+			    PDF.PDFCILTS_ID
+			FROM
+			TB_PDFCILTS PDF
+			WHERE 1 = 1
+			<include refid="searchPdfcilts"/>
+		) as cnt
+	</select>
+
+	<select id="selectPdfciltsDetail" resultType="Pdfcilts">
+		SELECT PDF.PDFCILTS_ID
+			 , PDF.PDFCILTS_CODE
+			 , PDF.PDFCILTS_NM
+			 , PDF.PLC_DVCODE
+			 , PDF.USE_AT
+			 , PDF.FRST_REGIST_PNTTM
+			 , PDF.FRST_REGISTER_ID
+			 , PDF.LAST_UPDT_PNTTM
+			 , PDF.LAST_UPDUSR_ID
+			 , PDF.PDFCILTS_DC
+			 , (SELECT USER_ID FROM view_usermaster usr WHERE usr.ESNTL_ID = PDF.FRST_REGISTER_ID) as FRST_REGISTER_USER_ID
+			 , (SELECT USER_ID FROM view_usermaster usr WHERE usr.ESNTL_ID = PDF.LAST_UPDUSR_ID) as LAST_UPDUSR_USER_ID
+		FROM
+			TB_PDFCILTS PDF
+		WHERE
+			PDF.PDFCILTS_ID = #{pdfciltsId}
+	</select>
+
+	<select id="selectPdfciltsCntByCode" resultType="java.lang.Integer">
+		SELECT
+			COUNT(1) as cnt
+		FROM
+			TB_PDFCILTS PDF
+		WHERE
+			PDF.PDFCILTS_CODE = #{pdfciltsCode}
+	</select>
+
+	<insert id="insertPdfcilts">
+
+		<selectKey keyProperty="pdfciltsId" resultType="java.lang.Integer" order="BEFORE">
+			SELECT IFNULL(MAX(PDFCILTS_ID),0)+1 AS PDFCILTS_ID  FROM TB_PDFCILTS
+		</selectKey>
+		INSERT INTO
+			TB_PDFCILTS
+		(	  PDFCILTS_ID
+			, PDFCILTS_CODE
+			, PDFCILTS_NM
+			, PLC_DVCODE
+			, USE_AT
+			, FRST_REGIST_PNTTM
+			, FRST_REGISTER_ID
+			, PDFCILTS_DC
+		) VALUES (
+			#{pdfciltsId}
+			, #{pdfciltsCode}
+			, #{pdfciltsNm}
+		    , #{plcDvcode}
+			, #{useAt}
+			, sysdate()
+			, #{frstRegisterId}
+			, #{pdfciltsDc}
+		)
+	</insert>
+
+	<update id="updatePdfcilts">
+		UPDATE TB_PDFCILTS
+		SET
+			PDFCILTS_CODE = #{pdfciltsCode}
+			, PDFCILTS_NM = #{pdfciltsNm}
+		  	, PLC_DVCODE = #{plcDvcode}
+			, USE_AT = #{useAt}
+			, LAST_UPDT_PNTTM = sysdate()
+			, LAST_UPDUSR_ID = #{lastUpdusrId}
+			, PDFCILTS_DC = #{pdfciltsDc}
+		WHERE
+			PDFCILTS_ID = #{pdfciltsId}
+	</update>
+
+	<delete id="deletePdfcilts">
+		DELETE FROM
+			TB_PDFCILTS
+		WHERE
+			PDFCILTS_ID = #{pdfciltsId}
+	</delete>
+</mapper>

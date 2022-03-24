@@ -1,0 +1,69 @@
+<!DOCTYPE tiles-definitions PUBLIC "-//Apache Software Foundation//DTD Tiles Configuration 3.0//EN" "http://tiles.apache.org/dtds/tiles-config_3_0.dtd">
+<tiles-definitions>
+
+	<!-- MES-->
+	<definition name="mes-layout" 			template="/WEB-INF/jsp/jisungsoft/com/mes/inc/layout.jsp" 		preparer="jisungsoft.com.cmm.VIewMenuPreparer">
+		<put-attribute name="head" 			value="/WEB-INF/jsp/jisungsoft/com/mes/inc/head.jsp" />
+		<put-attribute name="header" 		value="/WEB-INF/jsp/jisungsoft/com/mes/inc/header.jsp" />
+		<put-attribute name="left" 			value="/WEB-INF/jsp/jisungsoft/com/mes/inc/left.jsp" />
+		<put-attribute name="breadcrumb" 	value="/WEB-INF/jsp/jisungsoft/com/mes/inc/breadcrumb.jsp" />
+		<put-attribute name="shortcuts" 	value="/WEB-INF/jsp/jisungsoft/com/mes/inc/shortcuts.jsp" />
+		<put-attribute name="footer" 		value="/WEB-INF/jsp/jisungsoft/com/mes/inc/footer.jsp" />
+		<put-attribute name="quickMenu" 	value="/WEB-INF/jsp/jisungsoft/com/mes/inc/quickMenu.jsp" />
+		<put-attribute name="commonScript" 	value="/WEB-INF/jsp/jisungsoft/com/mes/script/cmmScript.jsp" />
+		<put-attribute name="alert" 		value="/WEB-INF/jsp/jisungsoft/com/mes/inc/alert.jsp" />
+	</definition>
+<!--
+	<definition name="*.mes" extends="mes-layout">
+		<put-attribute name="content"  value="/WEB-INF/jsp/{1}.jsp" />
+		<put-attribute name="script"   value="/WEB-INF/jsp/script.jsp"/>
+		<put-attribute name="viewPath" value="/{1}"></put-attribute>
+		<put-attribute name="pageName" value="{1}"></put-attribute>
+	</definition>
+	<definition name="*/*.mes" extends="mes-layout">
+		<put-attribute name="content"  value="/WEB-INF/jsp/{1}/{2}.jsp" />
+		<put-attribute name="script"   value="/WEB-INF/jsp/{1}/script.jsp"/>
+		<put-attribute name="viewPath" value="/{1}/{2}"></put-attribute>
+		<put-attribute name="pageName" value="{2}"></put-attribute>
+	</definition>
+	-->
+	<definition name="*/*/*.mes" extends="mes-layout">
+		<put-attribute name="content"  value="/WEB-INF/jsp/{1}/{2}/{3}.jsp" />
+		<put-attribute name="script"   value="/WEB-INF/jsp/{1}/{2}/script.jsp"/>
+		<put-attribute name="viewPath" value="/{1}/{2}/{3}"></put-attribute>
+		<put-attribute name="pageName" value="{3}"></put-attribute>
+	</definition>
+	<definition name="*/*/*/*.mes" extends="mes-layout">
+		<put-attribute name="content"  value="/WEB-INF/jsp/{1}/{2}/{3}/{4}.jsp" />
+		<put-attribute name="script"   value="/WEB-INF/jsp/{1}/{2}/{3}/script.jsp"/>
+		<put-attribute name="viewPath" value="/{1}/{2}/{3}/{4}"></put-attribute>
+		<put-attribute name="pageName" value="{4}"></put-attribute>
+	</definition>
+	<definition name="*/*/*/*/*.mes" extends="mes-layout">
+		<put-attribute name="content"  value="/WEB-INF/jsp/{1}/{2}/{3}/{4}/{5}.jsp" />
+		<put-attribute name="script"   value="/WEB-INF/jsp/{1}/{2}/{3}/{4}/script.jsp"/>
+		<put-attribute name="viewPath" value="/{1}/{2}/{3}/{4}/{5}"></put-attribute>
+		<put-attribute name="pageName" value="{5}"></put-attribute>
+	</definition>
+	<definition name="*/*/*/*/*/*.mes" extends="mes-layout">
+		<put-attribute name="content"  value="/WEB-INF/jsp/{1}/{2}/{3}/{4}/{5}/{6}.jsp" />
+		<put-attribute name="script"   value="/WEB-INF/jsp/{1}/{2}/{3}/{4}/{5}/script.jsp"/>
+		<put-attribute name="viewPath" value="/{1}/{2}/{3}/{4}/{5}/{6}"></put-attribute>
+		<put-attribute name="pageName" value="{6}"></put-attribute>
+	</definition>
+	<definition name="*/*/*/*/*/*/*.mes" extends="mes-layout">
+		<put-attribute name="content"  value="/WEB-INF/jsp/{1}/{2}/{3}/{4}/{5}/{6}/{7}.jsp" />
+		<put-attribute name="script"   value="/WEB-INF/jsp/{1}/{2}/{3}/{4}/{5}/{6}/script.jsp"/>
+		<put-attribute name="viewPath" value="/{1}/{2}/{3}/{4}/{5}/{6}/{7}"></put-attribute>
+		<put-attribute name="pageName" value="{7}"></put-attribute>
+	</definition>
+	<definition name="*/*/*/*/*/*/*/*.mes" extends="mes-layout">
+		<put-attribute name="content"  value="/WEB-INF/jsp/{1}/{2}/{3}/{4}/{5}/{6}/{7}/{8}.jsp" />
+		<put-attribute name="script"   value="/WEB-INF/jsp/{1}/{2}/{3}/{4}/{5}/{6}/{7}/script.jsp"/>
+		<put-attribute name="viewPath" value="/{1}/{2}/{3}/{4}/{5}/{6}/{7}/{8}"></put-attribute>
+		<put-attribute name="pageName" value="{8}"></put-attribute>
+	</definition>
+	<!-- //MES-->
+</tiles-definitions>
+
+

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?><!--Converted at: Wed May 11 15:49:52 KST 2016-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="UserEmailConfgDAO">
+
+    <select id="selectUserEmailConfgDetail" parameterType="UserEmailConfgVO" resultType="UserEmailConfgVO">
+
+        SELECT
+            EMPLYR_ID,
+            EM_HOST,
+            EM_PORT,
+            EM_PROTOCOL,
+            EM_ID,
+            EM_PASSWORD,
+            EM_SENDER_NAME,
+            EM_EMAIL_ADDRESS
+        FROM
+            TB_USEREMAILCONFG
+        WHERE
+            EMPLYR_ID = #{emplyrId}
+
+    </select>
+
+    <select id="selectUserEmailConfgCnt" parameterType="UserEmailConfgVO" resultType="java.lang.Integer">
+
+        SELECT COUNT(1) FROM (
+             SELECT
+                 EMPLYR_ID
+             FROM
+                 TB_USEREMAILCONFG
+             WHERE
+                 EMPLYR_ID = #{emplyrId}
+        ) AS cnt
+
+    </select>
+
+    <insert id="insertUserEmailConfg" parameterType="UserEmailConfgVO">
+
+        INSERT INTO TB_USEREMAILCONFG
+        (
+             EMPLYR_ID,
+             EM_HOST,
+             EM_PORT,
+             EM_PROTOCOL,
+             EM_ID,
+             EM_PASSWORD,
+             EM_SENDER_NAME,
+             EM_EMAIL_ADDRESS
+         ) VALUES (
+            #{emplyrId},
+            #{emHost},
+            #{emPort},
+            #{emProtocol},
+            #{emId},
+            #{emPassword},
+            #{emSenderName},
+            #{emEmailAddress}
+        )
+
+    </insert>
+
+    <update id="updateUserEmailConfg" parameterType="UserEmailConfgVO">
+
+        UPDATE
+            TB_USEREMAILCONFG
+        SET
+            EM_HOST = #{emHost},
+            EM_PORT = #{emPort},
+            EM_PROTOCOL = #{emProtocol},
+            EM_ID = #{emId},
+            EM_PASSWORD = #{emPassword},
+            EM_SENDER_NAME = #{emSenderName},
+            EM_EMAIL_ADDRESS = #{emEmailAddress}
+        WHERE
+            EMPLYR_ID = #{emplyrId}
+
+    </update>
+</mapper>

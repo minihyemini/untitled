@@ -1,0 +1,328 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="jisungsoft.com.repository.sym.MenuMapper">
+
+	<select id="selectMenuViewDataList" resultType="Menu">
+		SELECT
+			A.MENU_NM,
+			A.MENU_CATEGORY,
+			A.MENU_NO,
+			A.UPPER_MENU_NO,
+			A.MENU_ORDR,
+			A.MENU_DC,
+			A.MENU_LV,
+			A.RELATE_IMAGE_PATH,
+			A.RELATE_IMAGE_NM,
+			A.USE_AT,
+			A.TARGET_AT,
+		    B.PROGRM_ID,
+			B.URL,
+			B.PROGRM_STRE_PATH,
+			B.PROGRM_FILE_NM,
+			B.PROGRM_QUERY,
+			(SELECT COUNT(1) FROM TB_MENUINFO WHERE UPPER_MENU_NO = A.MENU_NO) AS SUB_CNT
+		FROM
+			TB_MENUINFO A LEFT OUTER JOIN TB_PROGRMLIST B
+			ON A.PROGRM_ID = B.PROGRM_ID
+		WHERE
+			A.MENU_LV = #{menuLv}
+		AND
+			A.USE_AT = 'Y'
+		<if test="menuNo != null">
+			AND
+			A.UPPER_MENU_NO = #{menuNo}
+		</if>
+		AND
+			A.MENU_CATEGORY = #{menuCategory}
+		<!--
+                AND (
+                    A.MENU_NO = (
+                        SELECT
+                            MENU_NO
+                        FROM
+                            TB_MENUCREATDTLS
+                        WHERE
+                            MENU_NO = A.MENU_NO
+                        AND AUTHOR_CODE = #{authorCode}
+                    )
+                )
+                -->
+		ORDER BY
+		A.MENU_ORDR ASC
+	</select>
+
+	<select id="selectMenuViewDataDetail" resultType="Menu">
+		SELECT
+			A.MENU_NM,
+			A.MENU_CATEGORY,
+			A.MENU_LV,
+			A.MENU_NO,
+			A.UPPER_MENU_NO,
+			(SELECT UPPER_MENU_NO FROM TB_MENUINFO WHERE MENU_NO = A.UPPER_MENU_NO) AS PARENT_MENU_NO,
+			A.MENU_ORDR,
+			A.MENU_DC,
+			A.RELATE_IMAGE_PATH,
+			A.RELATE_IMAGE_NM,
+			A.USE_AT,
+			A.TARGET_AT,
+			B.PROGRM_ID,
+			B.URL,
+			B.PROGRM_STRE_PATH,
+			B.PROGRM_FILE_NM,
+			B.PROGRM_QUERY,
+			(
+			    SELECT
+			        MENU_NM
+				FROM TB_MENUINFO tbl
+			    WHERE
+			        tbl.MENU_NO = CASE WHEN A.MENU_LV = 1
+			        THEN A.MENU_NO WHEN A.UPPER_MENU_NO = 0
+			        THEN A.MENU_NO ELSE A.UPPER_MENU_NO END LIMIT 1
+			) as UPPER_MENU_NM
+		FROM
+			TB_MENUINFO A LEFT OUTER JOIN TB_MENUCREATDTLS C ON A.MENU_NO = C.MENU_NO
+			LEFT OUTER JOIN TB_PROGRMLIST B ON A.PROGRM_ID = B.PROGRM_ID
+		WHERE
+			A.MENU_CATEGORY = #{menuCategory}
+		<if test="upperMenuNo != null and upperMenuNo neq 0">
+			AND
+			A.UPPER_MENU_NO = #{upperMenuNo}
+		</if>
+		<choose>
+			<when test="menuNo != null and menuNo neq 0">
+				AND
+				A.MENU_NO = #{menuNo}
+			</when>
+			<otherwise>
+				AND
+				B.URL LIKE CONCAT(#{url},'%')
+			</otherwise>
+		</choose>
+		<if test="progrmQuery != null and progrmQuery neq ''">
+			AND
+			B.PROGRM_QUERY LIKE CONCAT('%',#{progrmQuery})
+		</if>
+		<if test="menuLv != null">
+			AND
+			A.MENU_LV = #{menuLv}
+		</if>
+		LIMIT 1
+	</select>
+
+	<select id="selectMenuManageDetail" parameterType="Menu" resultType="Menu">
+		SELECT
+			A.MENU_NM,
+			A.MENU_CATEGORY,
+			A.MENU_NO,
+			A.UPPER_MENU_NO,
+			A.MENU_LV,
+			A.MENU_ORDR,
+			A.MENU_DC,
+			A.RELATE_IMAGE_PATH,
+			A.RELATE_IMAGE_NM,
+			A.USE_AT,
+		    A.TARGET_AT,
+			B.PROGRM_ID,
+			B.PROGRM_FILE_NM,
+			B.PROGRM_KOREAN_NM
+		FROM
+			TB_MENUINFO A LEFT OUTER JOIN TB_PROGRMLIST B ON A.PROGRM_ID = B.PROGRM_ID
+		WHERE
+			A.MENU_NO = #{menuNo}
+	</select>
+
+	<select id="selectMenuManageList" parameterType="Menu" resultType="Menu">
+		SELECT
+			A.MENU_NM,
+			A.MENU_CATEGORY,
+			A.MENU_NO,
+			A.UPPER_MENU_NO,
+		    A.MENU_LV,
+			A.MENU_ORDR,
+			A.MENU_DC,
+			A.RELATE_IMAGE_PATH,
+			A.RELATE_IMAGE_NM,
+			A.USE_AT,
+			B.PROGRM_ID,
+			B.PROGRM_FILE_NM,
+			B.URL AS chkURL,
+			B.PROGRM_STRE_PATH
+		FROM
+			TB_MENUINFO A LEFT OUTER JOIN TB_PROGRMLIST B ON A.PROGRM_ID = B.PROGRM_ID
+	</select>
+
+	<select id="selectMenuManageAllList" parameterType="Menu" resultType="Menu">
+		SELECT
+			A.MENU_NM,
+			A.MENU_CATEGORY,
+			A.MENU_NO,
+			A.UPPER_MENU_NO,
+		    A.MENU_LV,
+			A.MENU_ORDR,
+			A.MENU_DC,
+			A.RELATE_IMAGE_PATH,
+			A.RELATE_IMAGE_NM,
+			A.USE_AT,
+			B.PROGRM_ID,
+			B.PROGRM_FILE_NM,
+			B.URL AS chkURL,
+			B.PROGRM_STRE_PATH,
+			(SELECT COUNT(1) FROM TB_MENUINFO WHERE UPPER_MENU_NO = A.MENU_NO) AS SUB_CNT
+		FROM
+			TB_MENUINFO A LEFT OUTER JOIN TB_PROGRMLIST B ON A.PROGRM_ID = B.PROGRM_ID
+		WHERE
+		    1 = 1
+			<if test="progrmId != null">
+				AND A.PROGRM_ID = #{progrmId}
+			</if>
+		  	<if test="menuLv != null">
+				AND
+				A.MENU_LV = #{menuLv}
+			</if>
+			<if test="progrmFileNm != null and progrmFileNm neq ''">
+				AND
+				B.PROGRM_FILE_NM = #{progrmFileNm}
+			</if>
+			<if test="menuNo != null">
+				AND
+				A.MENU_NO = #{menuNo}
+			</if>
+			<if test="upperMenuNo != null">
+				AND
+				A.UPPER_MENU_NO = #{upperMenuNo}
+			</if>
+			<if test="menuCategory != null and menuCategory neq ''">
+				AND
+				A.MENU_CATEGORY = #{menuCategory}
+			</if>
+		ORDER BY
+			A.MENU_NO ASC, A.UPPER_MENU_NO ASC, A.MENU_ORDR ASC, A.MENU_CATEGORY ASC
+	</select>
+
+	<select id="selectMenuManageGroupList" parameterType="Menu" resultType="Menu">
+		SELECT
+			A.MENU_NM,
+			A.MENU_CATEGORY,
+			A.MENU_NO,
+			A.UPPER_MENU_NO,
+		    A.MENU_LV,
+			A.MENU_ORDR,
+			A.MENU_DC,
+			A.RELATE_IMAGE_PATH,
+			A.RELATE_IMAGE_NM,
+			A.USE_AT,
+			B.PROGRM_ID,
+			B.URL AS chkURL,
+			B.PROGRM_FILE_NM,
+			B.PROGRM_STRE_PATH
+		FROM
+			TB_MENUINFO A LEFT OUTER JOIN TB_PROGRMLIST B ON A.PROGRM_ID = B.PROGRM_ID
+		GROUP BY
+			MENU_CATEGORY
+	</select>
+
+	<select id="selectMenuManageListTotCnt" parameterType="Menu" resultType="java.lang.Integer">
+		SELECT
+			COUNT(1)
+		FROM
+			(
+				SELECT
+					A.MENU_NO
+				FROM
+					TB_MENUINFO A LEFT OUTER JOIN TB_PROGRMLIST B ON A.PROGRM_ID = B.PROGRM_ID
+			) AS cnt
+	</select>
+
+	<select id="selectMaxMenuDATA" parameterType="Menu" resultType="Menu">
+		SELECT
+			MAX(A.MENU_NO) AS MENU_NO,
+			MAX(A.UPPER_MENU_NO) AS UPPER_MENU_NO
+		FROM
+			TB_MENUINFO A LEFT OUTER JOIN TB_PROGRMLIST B ON A.PROGRM_ID = B.PROGRM_ID
+		WHERE
+			A.MENU_CATEGORY = #{menuCategory}
+			<if test="progrmFileNm != null and progrmFileNm neq ''">
+				AND
+				B.PROGRM_FILE_NM = #{progrmFileNm}
+			</if>
+			<if test="upperMenuNo != null">
+				AND
+				A.UPPER_MENU_NO = #{upperMenuNo}
+			</if>
+	</select>
+
+	<insert id="insertMenuManage">
+		INSERT INTO TB_MENUINFO (
+			MENU_NM,
+			MENU_CATEGORY,
+			MENU_NO,
+			UPPER_MENU_NO,
+			MENU_LV,
+			MENU_ORDR,
+			MENU_DC,
+			RELATE_IMAGE_PATH,
+			RELATE_IMAGE_NM,
+			USE_AT,
+			TARGET_AT,
+			PROGRM_ID
+		) VALUES (
+			#{menuNm},
+			#{menuCategory},
+			#{menuNo},
+			#{upperMenuNo},
+		    #{menuLv},
+			#{menuOrdr},
+			#{menuDc},
+			#{relateImagePath},
+			#{relateImageNm},
+			#{useAt},
+		    #{targetAt},
+		    #{progrmId}
+		)
+	</insert>
+
+	<update id="updateMenuManage">
+		UPDATE
+			TB_MENUINFO
+		SET
+			MENU_NM = #{menuNm},
+			MENU_CATEGORY = #{menuCategory},
+			UPPER_MENU_NO = #{upperMenuNo},
+			MENU_ORDR = #{menuOrdr},
+			MENU_DC = #{menuDc},
+			RELATE_IMAGE_PATH = #{relateImagePath},
+			RELATE_IMAGE_NM = #{relateImageNm},
+			USE_AT = #{useAt},
+		    TARGET_AT = #{targetAt},
+			PROGRM_ID = #{progrmId}
+		WHERE
+			MENU_NO = #{menuNo}
+	</update>
+
+	<delete id="deleteMenuManage">
+		DELETE FROM
+			TB_MENUINFO
+		WHERE
+			MENU_NO = #{menuNo}
+	</delete>
+
+	<select id="selectMenuNoByPk" parameterType="Menu" resultType="java.lang.Integer">
+		SELECT
+			COUNT(1)
+		FROM
+			TB_MENUINFO
+		WHERE
+			MENU_NO = #{menuNo}
+	</select>
+
+	<select id="selectUpperMenuNoByPk" parameterType="Menu" resultType="java.lang.Integer">
+		SELECT
+			COUNT(1)
+		FROM
+			TB_MENUINFO
+		WHERE
+			UPPER_MENU_NO = #{upperMenuNo}
+	</select>
+
+</mapper>

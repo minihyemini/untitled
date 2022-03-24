@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="Seminar">
+
+    <sql id="searchSeminar">
+        <if test="@egovframework.com.cmm.util.EgovMybaitsUtil@isNotEmpty(searchKeyword)">
+            <if test="searchCondition eq 0">
+                AND  (SE_SJ LIKE CONCAT ('%', #{searchKeyword},'%')
+                 OR   SE_CN LIKE CONCAT ('%', #{searchKeyword},'%')
+                 OR   SE_HEAD LIKE CONCAT ('%', #{searchKeyword},'%'))
+            </if>
+            <if test="searchCondition eq 1">
+                AND  SE_SJ LIKE CONCAT ('%', #{searchKeyword},'%')
+            </if>
+            <if test="searchCondition eq 2">
+                AND  SE_CN LIKE CONCAT ('%', #{searchKeyword},'%')
+            </if>
+            <if test="searchCondition eq 3">
+                AND  SE_HEAD LIKE CONCAT ('%', #{searchKeyword},'%')
+            </if>
+        </if>
+    </sql>
+
+    <sql id="selectSeminar">
+        SELECT
+                 SE_ID
+             ,   SE_SJ
+             ,   SE_CN
+             ,	 DATE_FORMAT(smn.SE_BEGIN_DE, '%Y-%m-%d') as SE_BEGIN_DE
+             ,	 DATE_FORMAT(smn.SE_END_DE, '%Y-%m-%d') as SE_END_DE
+             ,	 DATE_FORMAT(smn.SE_REG_BEGIN_DE, '%Y-%m-%d') as SE_REG_BEGIN_DE
+             ,	 DATE_FORMAT(smn.SE_REG_END_DE, '%Y-%m-%d') as SE_REG_END_DE
+             ,   SE_MAX_PP
+             ,   SE_PLACE
+             ,   SE_HEAD
+             ,	 ATCH_FILE_ID
+             ,  (SELECT COUNT(*) FROM TB_FILEDETAIL WHERE ATCH_FILE_ID = smn.ATCH_FILE_ID) as FILE_CNT
+             ,	(SELECT COUNT(*) FROM TB_SEMINARMBER WHERE SE_ID = smn.SE_ID) as MBER_CNT
+        FROM   TB_SEMINARINFO smn
+        WHERE  1=1
+    </sql>
+
+    <select id="selectSeminarList" parameterType="ArticleSeminarVO" resultType="egovMap">
+        <include refid="selectSeminar" />
+        <include refid="searchSeminar" />
+        ORDER  BY  SE_REG_BEGIN_DE DESC
+        LIMIT  #{recordCountPerPage} OFFSET #{firstIndex}
+    </select>
+
+    <select id="selectSeminarListCnt" parameterType="ArticleSeminarVO" resultType="java.lang.Integer">
+        SELECT  COUNT(SE_ID)
+        FROM  TB_SEMINARINFO
+        WHERE  1=1
+        <include refid="searchSeminar" />
+    </select>
+
+    <select id="selectSeminarDetail" parameterType="ArticleSeminarVO" resultType="ArticleSeminarVO">
+        <include refid="selectSeminar" />
+        AND  smn.SE_ID = #{seId}
+    </select>
+
+    <insert id="insertSeminar">
+        INSERT INTO TB_SEMINARINFO
+        (   SE_ID
+        ,   SE_SJ
+        ,   SE_CN
+        ,   SE_BEGIN_DE
+        ,   SE_END_DE
+        ,   SE_REG_BEGIN_DE
+        ,   SE_REG_END_DE
+        ,   SE_MAX_PP
+        ,   SE_PLACE
+        ,   SE_HEAD
+        ,   ATCH_FILE_ID
+         )
+        VALUES
+        (
+            #{seId}
+        ,   #{seSj}
+        ,   #{seCn}
+        ,   #{seBeginDe}
+        ,   #{seEndDe}
+        ,   #{seRegBeginDe}
+        ,   #{seRegEndDe}
+        ,   #{seMaxPp}
+        ,   #{sePlace}
+        ,   #{seHead}
+        ,   #{atchFileId}
+        )
+    </insert>
+
+    <insert id="insertSeminarMber">
+        INSERT INTO TB_SEMINARMBER
+        (   SMBER_ID
+        ,   SE_ID
+        ,   ESNTL_ID
+        ,   SE_REG_DATE
+        )
+        VALUES
+        (
+            #{smberId}
+        ,   #{seId}
+        ,   #{esntlId}
+        ,   sysdate()
+        )
+    </insert>
+
+    <update id="updateSeminar">
+        UPDATE  TB_SEMINARINFO
+           SET  SE_SJ = #{seSj}
+             ,  SE_CN = #{seCn}
+             ,  SE_BEGIN_DE = #{seBeginDe}
+             ,  SE_END_DE   = #{seEndDe}
+             ,  SE_REG_BEGIN_DE = #{seRegBeginDe}
+             ,  SE_REG_END_DE   = #{seRegEndDe}
+             ,  SE_MAX_PP = #{seMaxPp}
+             ,  SE_PLACE  = #{sePlace}
+             ,  SE_HEAD   = #{seHead}
+             ,  ATCH_FILE_ID = #{atchFileId}
+         WHERE  SE_ID = #{seId}
+    </update>
+
+    <delete id="deleteSeminar">
+        DELETE
+          FROM  TB_SEMINARINFO
+         WHERE  SE_ID = #{seId}
+    </delete>
+
+    <!--팝업에 사용 될 세미나 신청 리스트-->
+    <select id="selectSeminarMberList" parameterType="ArticleSeminarVO" resultType="ArticleSeminarVO">
+        SELECT
+                smn.SMBER_ID
+             ,  smn.SE_ID
+             ,	smn.ESNTL_ID
+             ,	DATE_FORMAT(smn.SE_REG_DATE, '%Y-%m-%d') as SE_REG_DATE
+             ,	usr.USER_ID as FRST_REGISTER_ID
+             ,	usr.USER_NM as FRST_REGISTER_NM
+          FROM	TB_SEMINARMBER smn
+          LEFT	JOIN ( SELECT ESNTL_ID, USER_ID, USER_NM
+                         FROM VIEW_USERMASTER ) usr
+            ON	smn.ESNTL_ID = usr.ESNTL_ID
+         WHERE  1=1
+           AND  smn.SE_ID =  #{seId}
+      ORDER BY  smn.SE_REG_DATE DESC
+         LIMIT  #{recordCountPerPage} OFFSET #{firstIndex}
+    </select>
+
+    <select id="selectSeminarMberCnf" parameterType="ArticleSeminarVO" resultType="java.lang.Integer">
+        SELECT  COUNT(SE_ID)
+          FROM  TB_SEMINARMBER
+         WHERE  1=1
+           AND  SE_ID = #{seId}
+           AND  ESNTL_ID = #{esntlId}
+    </select>
+
+    <select id="selectSeminarMberCnt" parameterType="ArticleSeminarVO" resultType="java.lang.Integer">
+        SELECT  COUNT(SE_ID)
+          FROM  TB_SEMINARMBER
+         WHERE  1=1
+           AND  SE_ID=#{seId}
+    </select>
+
+    <delete id="deleteSeminarMber">
+        DELETE
+          FROM  TB_SEMINARMBER
+         WHERE  SE_ID = #{seId}
+           AND  ESNTL_ID = #{esntlId}
+    </delete>
+</mapper>

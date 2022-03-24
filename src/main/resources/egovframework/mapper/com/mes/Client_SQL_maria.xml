@@ -1,0 +1,263 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+		"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="jisungsoft.com.repository.mes.ClientMapper">
+
+	<sql id="searchClient">
+		<if test="@egovframework.com.cmm.util.EgovMybaitsUtil@isNotEmpty(searchKeyword)">
+			<if test="searchCondition eq 0">
+				AND(
+				A.CLT_NM LIKE CONCAT ('%', #{searchKeyword},'%')
+				OR
+				A.CLT_CODE LIKE CONCAT ('%', #{searchKeyword},'%')
+				OR
+				A.CLT_BUSSNUM LIKE CONCAT ('%', #{searchKeyword},'%')
+				)
+			</if>
+			<if test="searchCondition eq 1">
+				AND
+				A.CLT_NM LIKE CONCAT ('%', #{searchKeyword},'%')
+			</if>
+			<if test="searchCondition eq 2">
+				AND
+				A.CLT_CODE LIKE CONCAT ('%', #{searchKeyword},'%')
+			</if>
+			<if test="searchCondition eq 3">
+				AND
+				A.CLT_BUSSNUM LIKE CONCAT ('%', #{searchKeyword},'%')
+			</if>
+			<if test="searchCondition eq 3">
+				AND
+				A.CLT_CPRTNUM LIKE CONCAT ('%', #{searchKeyword},'%')
+			</if>
+		</if>
+		<if test="cltBusstype != null and cltBusstype neq ''">
+			AND
+			A.CLT_BUSSNUM = #{cltBusstype}
+		</if>
+	</sql>
+
+	<!--엑셀 출력용 쿼리-->
+	<select id="selectClientAllListMap" resultType="egovMap">
+		SELECT A.CLT_ID
+		, A.CLT_CODE
+		, A.CLT_NM
+		, A.CLT_OWNRNM
+		, A.CLT_TYPE
+		, A.CLT_BUSSTYPE
+		, A.CLT_BUSSNUM
+		, A.CLT_CPRTNUM
+		, A.CLT_ZIP
+		, A.CLT_ADDR
+		, A.CLT_DETAIL_ADDR
+		, A.CLT_TELNO
+		, A.CLT_FAXNUM
+		, A.CLT_EMAIL
+		, A.CLT_SETUPDT
+		, A.CLT_DLBEGINDT
+		, A.CLT_DLENDT
+		, A.CLT_DEADLNDT
+		, A.FRST_REGIST_PNTTM
+		, A.FRST_REGISTER_ID
+		, A.LAST_UPDT_PNTTM
+		, A.LAST_UPDUSR_ID
+		, (SELECT COUNT(1) FROM TB_PDNUMCLIENT WHERE CLT_ID = A.CLT_ID) as PDNUM_CLIENT_CNT
+		FROM
+		TB_CLIENT A
+		WHERE
+		1 = 1
+		<include refid="searchClient"/>
+		ORDER BY A.FRST_REGIST_PNTTM DESC
+	</select>
+
+	<select id="selectClientAllList" resultType="Client">
+		SELECT A.CLT_ID
+			, A.CLT_CODE
+			, A.CLT_NM
+            , A.CLT_OWNRNM
+            , A.CLT_TYPE
+            , A.CLT_BUSSTYPE
+            , A.CLT_BUSSNUM
+            , A.CLT_CPRTNUM
+            , A.CLT_ZIP
+            , A.CLT_ADDR
+            , A.CLT_DETAIL_ADDR
+            , A.CLT_TELNO
+            , A.CLT_FAXNUM
+            , A.CLT_EMAIL
+            , A.CLT_SETUPDT
+            , A.CLT_DLBEGINDT
+            , A.CLT_DLENDT
+            , A.CLT_DEADLNDT
+            , A.FRST_REGIST_PNTTM
+            , A.FRST_REGISTER_ID
+            , A.LAST_UPDT_PNTTM
+            , A.LAST_UPDUSR_ID
+			, (SELECT COUNT(1) FROM TB_PDNUMCLIENT WHERE CLT_ID = A.CLT_ID) as PDNUM_CLIENT_CNT
+		FROM
+			TB_CLIENT A
+		WHERE
+			1 = 1
+		<include refid="searchClient"/>
+		ORDER BY A.FRST_REGIST_PNTTM DESC
+	</select>
+
+	<select id="selectClientList" resultType="Client">
+		SELECT A.CLT_ID
+			, A.CLT_CODE
+			, A.CLT_NM
+			, A.CLT_OWNRNM
+			, A.CLT_TYPE
+			, A.CLT_BUSSTYPE
+			, A.CLT_BUSSNUM
+			, A.CLT_CPRTNUM
+			, A.CLT_ZIP
+			, A.CLT_ADDR
+			, A.CLT_DETAIL_ADDR
+			, A.CLT_TELNO
+			, A.CLT_FAXNUM
+			, A.CLT_EMAIL
+			, A.CLT_SETUPDT
+			, A.CLT_DLBEGINDT
+			, A.CLT_DLENDT
+			, A.CLT_DEADLNDT
+			, A.FRST_REGIST_PNTTM
+			, A.FRST_REGISTER_ID
+			, A.LAST_UPDT_PNTTM
+			, A.LAST_UPDUSR_ID
+			, (SELECT COUNT(1) FROM TB_PDNUMCLIENT WHERE CLT_ID = A.CLT_ID) as PDNUM_CLIENT_CNT
+		FROM
+			TB_CLIENT A
+		WHERE
+			1 = 1
+		<include refid="searchClient"/>
+		ORDER BY A.FRST_REGIST_PNTTM DESC
+		LIMIT  #{recordCountPerPage} OFFSET #{firstIndex}
+	</select>
+
+	<select id="selectClientDetailListCnt" resultType="java.lang.Integer">
+		SELECT COUNT(1) FROM (
+			SELECT
+				A.CLT_ID
+			FROM
+				TB_CLIENT A
+			WHERE 1 = 1
+			<include refid="searchClient"/>
+		) as cnt
+	</select>
+
+	<select id="selectClientDetail" resultType="Client">
+		SELECT A.CLT_ID
+			 , A.CLT_CODE
+			 , A.CLT_NM
+			 , A.CLT_OWNRNM
+			 , A.CLT_TYPE
+			 , A.CLT_BUSSTYPE
+			 , A.CLT_BUSSNUM
+			 , A.CLT_CPRTNUM
+			 , A.CLT_ZIP
+			 , A.CLT_ADDR
+			 , A.CLT_DETAIL_ADDR
+			 , A.CLT_TELNO
+			 , A.CLT_FAXNUM
+			 , A.CLT_EMAIL
+		     , DATE_FORMAT(A.CLT_SETUPDT,'%Y%m%d') as CLT_SETUPDT
+		     , DATE_FORMAT(A.CLT_DLBEGINDT,'%Y%m%d') as CLT_DLBEGINDT
+		     , DATE_FORMAT(A.CLT_DLENDT,'%Y%m%d') as CLT_DLENDT
+			 , DATE_FORMAT(A.CLT_DEADLNDT,'%Y%m%d') as CLT_DEADLNDT
+			 , A.FRST_REGIST_PNTTM
+			 , A.FRST_REGISTER_ID
+			 , A.LAST_UPDT_PNTTM
+			 , A.LAST_UPDUSR_ID
+		FROM
+			TB_CLIENT A
+		WHERE
+			A.CLT_ID = #{cltId}
+	</select>
+
+	<insert id="insertClientData">
+
+		<selectKey keyProperty="cltId" resultType="java.lang.Integer" order="BEFORE">
+			SELECT IFNULL(MAX(CLT_ID),0)+1 AS CLT_ID  FROM TB_CLIENT
+		</selectKey>
+
+		INSERT INTO TB_CLIENT
+		(
+			CLT_ID
+			, CLT_CODE
+			, CLT_NM
+			, CLT_OWNRNM
+			, CLT_TYPE
+			, CLT_BUSSTYPE
+			, CLT_BUSSNUM
+			, CLT_CPRTNUM
+			, CLT_ZIP
+			, CLT_ADDR
+			, CLT_DETAIL_ADDR
+			, CLT_TELNO
+			, CLT_FAXNUM
+			, CLT_EMAIL
+			, CLT_SETUPDT
+			, CLT_DLBEGINDT
+			, CLT_DLENDT
+			, CLT_DEADLNDT
+			, FRST_REGIST_PNTTM
+			, FRST_REGISTER_ID
+		) VALUES (
+			#{cltId}
+			, #{cltCode}
+			, #{cltNm}
+			, #{cltOwnrnm}
+			, #{cltType}
+			, #{cltBusstype}
+			, #{cltBussnum}
+			, #{cltCprtnum}
+			, #{cltZip}
+			, #{cltAddr}
+			, #{cltDetailAddr}
+			, #{cltTelno}
+			, #{cltFaxnum}
+			, #{cltEmail}
+			, #{cltSetupdt}
+			, #{cltDlbegindt}
+			, #{cltDlendt}
+			, #{cltDeadlndt}
+			, sysdate()
+			, #{frstRegisterId}
+		)
+	</insert>
+
+	<update id="updateClientData">
+		UPDATE
+		    TB_CLIENT
+		SET
+			CLT_CODE = #{cltCode}
+			, CLT_NM = #{cltNm}
+			, CLT_OWNRNM = #{cltOwnrnm}
+			, CLT_TYPE = #{cltType}
+			, CLT_BUSSTYPE = #{cltBusstype}
+			, CLT_BUSSNUM = #{cltBussnum}
+			, CLT_CPRTNUM = #{cltCprtnum}
+			, CLT_ZIP = #{cltZip}
+			, CLT_ADDR = #{cltAddr}
+			, CLT_DETAIL_ADDR = #{cltDetailAddr}
+			, CLT_TELNO = #{cltTelno}
+			, CLT_FAXNUM = #{cltFaxnum}
+			, CLT_EMAIL = #{cltEmail}
+			, CLT_SETUPDT = #{cltSetupdt}
+			, CLT_DLBEGINDT = #{cltDlbegindt}
+			, CLT_DLENDT = #{cltDlendt}
+		  	, CLT_DEADLNDT = #{cltDeadlndt}
+			, LAST_UPDT_PNTTM = sysdate()
+			, LAST_UPDUSR_ID = #{lastUpdusrId}
+		WHERE
+			CLT_ID = #{cltId}
+	</update>
+
+	<delete id="deleteClientData">
+		DELETE FROM
+		    TB_CLIENT
+		WHERE
+			CLT_ID = #{cltId}
+	</delete>
+</mapper>

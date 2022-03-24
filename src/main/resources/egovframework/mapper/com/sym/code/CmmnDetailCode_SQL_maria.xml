@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+		"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="jisungsoft.com.repository.sym.CmmnDetailCodeMapper">
+
+	<sql id="searchCmmnDetailCode">
+		<if test="@egovframework.com.cmm.util.EgovMybaitsUtil@isNotEmpty(searchKeyword)">
+			<if test="searchCondition eq 0">
+				AND  (DTB.CODE LIKE CONCAT ('%', #{searchKeyword},'%') OR
+				      NTB.CODE_ID_NM LIKE CONCAT ('%', #{searchKeyword},'%') OR
+				      DTB.CODE_NM LIKE CONCAT ('%', #{searchKeyword},'%') OR
+				      DTB.CODE_ID LIKE CONCAT ('%', #{searchKeyword},'%'))
+			</if>
+			<if test="searchCondition eq 1">
+				AND  DTB.CODE_ID LIKE CONCAT ('%', #{searchKeyword},'%')
+			</if>
+			<if test="searchCondition eq 2">
+				AND  NTB.CODE_ID_NM LIKE CONCAT ('%', #{searchKeyword},'%')
+			</if>
+			<if test="searchCondition eq 3">
+				AND  DTB.CODE LIKE CONCAT ('%', #{searchKeyword},'%')
+			</if>
+			<if test="searchCondition eq 4">
+				AND  DTB.CODE_NM LIKE CONCAT ('%', #{searchKeyword},'%')
+			</if>
+		</if>
+		<if test="code != null and code neq ''">
+			AND  DTB.CODE = #{code}
+		</if>
+		<if test="codeId != null and codeId neq ''">
+			AND  DTB.CODE_ID = #{codeId}
+		</if>
+		<if test="clCode != null and clCode neq ''">
+			AND  CL.CL_CODE = #{clCode}
+		</if>
+		<if test="codeNm != null and codeNm neq ''">
+			AND  DTB.CODE_NM LIKE CONCAT ('%', #{codeNm},'%')
+		</if>
+	</sql>
+	<select id="selectCmmnDetailCodeList" resultType="CmmnDetailCode">
+
+		SELECT  NTB.CODE_ID
+		    ,	NTB.CODE_ID_NM
+		    ,	DTB.CODE
+		    ,	DTB.CODE_NM
+     		,	DTB.CODE_DC
+		    ,	DTB.USE_AT
+			,	DTB.SORT_ORDR
+		    ,	DTB.FRST_REGIST_PNTTM
+			,	DTB.FRST_REGISTER_ID
+		    ,	DTB.LAST_UPDT_PNTTM
+		    ,	DTB.LAST_UPDUSR_ID
+			,	(SELECT USER_ID FROM view_usermaster usr WHERE usr.ESNTL_ID = DTB.FRST_REGISTER_ID) as FRST_REGISTER_USER_ID
+			,	(SELECT USER_ID FROM view_usermaster usr WHERE usr.ESNTL_ID = DTB.LAST_UPDUSR_ID) as LAST_UPDUSR_USER_ID
+		FROM  TB_CMMNDETAILCODE DTB
+		INNER  JOIN TB_CMMNCODE NTB ON DTB.CODE_ID = NTB.CODE_ID
+		INNER JOIN TB_CMMNCLCODE CL ON CL.CL_CODE = NTB.CL_CODE
+		WHERE  1 = 1
+		<include refid="searchCmmnDetailCode"/>
+		ORDER  BY CODE_ID, CODE
+		LIMIT  #{recordCountPerPage} OFFSET #{firstIndex}
+	</select>
+
+	<select id="selectCmmnDetailCodeAllList" resultType="CmmnDetailCode">
+
+		SELECT  DTB.CODE_ID
+		     ,  NTB.CODE_ID_NM
+		     ,  DTB.CODE
+		     ,  DTB.CODE_NM
+		     ,  DTB.CODE_DC
+		     ,  DTB.USE_AT
+			 ,	DTB.SORT_ORDR
+			 ,	DTB.FRST_REGIST_PNTTM
+			 ,	DTB.FRST_REGISTER_ID
+			 ,	DTB.LAST_UPDT_PNTTM
+			 ,	DTB.LAST_UPDUSR_ID
+			,	(SELECT USER_ID FROM view_usermaster usr WHERE usr.ESNTL_ID = DTB.FRST_REGISTER_ID) as FRST_REGISTER_USER_ID
+			,	(SELECT USER_ID FROM view_usermaster usr WHERE usr.ESNTL_ID = DTB.LAST_UPDUSR_ID) as LAST_UPDUSR_USER_ID
+		FROM  TB_CMMNDETAILCODE DTB
+		INNER  JOIN TB_CMMNCODE NTB ON DTB.CODE_ID = NTB.CODE_ID
+		INNER JOIN TB_CMMNCLCODE CL ON CL.CL_CODE = NTB.CL_CODE
+		WHERE  1 = 1
+		<include refid="searchCmmnDetailCode"/>
+		ORDER  BY DTB.CODE
+	</select>
+
+	<select id="selectCmmnDetailCodeListCnt" resultType="java.lang.Integer">
+
+		SELECT
+		    COUNT(*) totcnt
+		FROM
+		     TB_CMMNDETAILCODE DTB
+		INNER JOIN TB_CMMNCODE NTB ON DTB.CODE_ID = NTB.CODE_ID
+		INNER JOIN TB_CMMNCLCODE CL ON CL.CL_CODE = NTB.CL_CODE
+		WHERE  1 = 1
+		<include refid="searchCmmnDetailCode"/>
+	</select>
+
+	<select id="selectCmmnDetailCodeDetail" resultType="CmmnDetailCode">
+		SELECT  DTB.CODE_ID
+			 ,  NTB.CODE_ID_NM
+			 ,  DTB.CODE
+			 ,  DTB.CODE_NM
+			 ,  DTB.CODE_DC
+			 ,  DTB.USE_AT
+			 ,	DTB.SORT_ORDR
+		  FROM  TB_CMMNDETAILCODE DTB
+	     INNER  JOIN TB_CMMNCODE NTB ON DTB.CODE_ID = NTB.CODE_ID
+  	     WHERE
+				DTB.CODE       = #{code}
+	</select>
+
+	<insert id="insertCmmnDetailCode">
+		INSERT INTO  TB_CMMNDETAILCODE
+		(  CODE_ID
+		,  CODE
+		,  CODE_NM
+		,  CODE_DC
+		,  USE_AT
+		,  FRST_REGIST_PNTTM
+		,  FRST_REGISTER_ID
+		,  SORT_ORDR
+		)
+		VALUES
+		(  #{codeId}
+		,  #{code}
+		,  #{codeNm}
+		,  #{codeDc}
+		,  #{useAt}
+		,  sysdate()
+		,  #{frstRegisterId}
+		,  #{sortOrdr}
+		)
+	</insert>
+
+	<update id="updateCmmnDetailCode">
+		UPDATE  TB_CMMNDETAILCODE
+		   SET  CODE_NM           = #{codeNm}
+		     ,  CODE_DC           = #{codeDc}
+		     ,  USE_AT            = #{useAt}
+		     ,  LAST_UPDT_PNTTM   = sysdate()
+		     ,  LAST_UPDUSR_ID    = #{lastUpdusrId}
+			 ,  SORT_ORDR		  = #{sortOrdr}
+	 	WHERE
+			CODE = #{code}
+	</update>
+
+	<delete id="deleteCmmnDetailCode" >
+		DELETE
+		FROM
+		     TB_CMMNDETAILCODE
+		WHERE
+			CODE = #{code}
+	</delete>
+</mapper>

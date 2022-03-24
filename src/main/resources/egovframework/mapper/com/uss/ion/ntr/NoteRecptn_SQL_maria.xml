@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="NoteRecptnDAO">
+
+    <sql id="searchNoteRecptn">
+        <if test="@egovframework.com.cmm.util.EgovMybaitsUtil@isNotEmpty(searchKeyword)">
+            <if test="searchCondition eq 0">
+                AND (ntm.NOTE_SJ LIKE CONCAT('%', #{searchKeyword}, '%') OR
+                     ntm.NOTE_CN LIKE CONCAT('%', #{searchKeyword}, '%'))
+            </if>
+            <if test="searchCondition eq 1">
+                AND ntm.NOTE_SJ LIKE CONCAT('%', #{searchKeyword}, '%')
+            </if>
+            <if test="searchCondition eq 2">
+                AND ntm.NOTE_CN LIKE CONCAT('%', #{searchKeyword}, '%')
+            </if>
+        </if>
+
+        <if test="searchFromDate != null and searchFromDate neq ''">
+            <if test="searchToDate != null and searchToDate neq ''">
+                <![CDATA[
+	            AND DATE_FORMAT(nts.FRST_REGIST_PNTTM,'%Y%m%d') >= #{searchFromDate} AND DATE_FORMAT(nts.FRST_REGIST_PNTTM,'%Y%m%d') <= #{searchToDate}
+	            ]]>
+            </if>
+        </if>
+    </sql>
+
+    <select id="selectNoteRecptn" parameterType="NoteRecptnVO" resultType="egovMap">
+        SELECT  ntm.NOTE_ID
+             ,  ntr.NOTE_TRNSMIT_ID
+             ,  ntr.NOTE_RECPTN_ID
+             ,  nts.TRNSMITER_ID
+             ,  ntm.NOTE_SJ
+             ,  ntm.NOTE_CN
+             ,  ntm.ATCH_FILE_ID
+             ,  ntr.RCVER_ID RCVER_ID
+             ,  ntr.OPEN_YN
+             ,  ntr.RECPTN_SE
+             ,  (SELECT USER_NM FROM VIEW_USERMASTER WHERE ESNTL_ID = nts.TRNSMITER_ID) RCVER_NM
+             ,  (SELECT ESNTL_ID FROM VIEW_USERMASTER WHERE ESNTL_ID = nts.TRNSMITER_ID) RCVER_IDS
+             ,  DATE_FORMAT(ntr.FRST_REGIST_PNTTM,'%Y-%m-%d %H:%i:%s') FRST_REGISTER_PNTTM
+          FROM  TB_NOTE ntm
+         INNER  JOIN TB_NOTETRNSMIT nts
+            ON  ntm.NOTE_ID = nts.NOTE_ID
+         INNER  JOIN TB_NOTERECPTN ntr
+            ON  nts.NOTE_ID = ntr.NOTE_ID
+           AND  nts.NOTE_TRNSMIT_ID = ntr.NOTE_TRNSMIT_ID
+           AND  (IFNULL(ntr.DELETE_AT,'N') = 'N' OR ntr.DELETE_AT = '')
+         WHERE  ntr.RCVER_ID = #{rcverId}
+        <include refid="searchNoteRecptn"/>
+         ORDER  BY ntm.FRST_REGIST_PNTTM DESC
+         LIMIT  #{recordCountPerPage} OFFSET #{firstIndex}
+    </select>
+
+    <select id="selectNoteRecptnDetail" resultType="NoteRecptnVO">
+
+        SELECT  ntm.NOTE_ID
+             ,  ntr.NOTE_TRNSMIT_ID
+             ,  ntr.NOTE_RECPTN_ID
+             ,  nts.TRNSMITER_ID
+             ,  (SELECT USER_NM FROM VIEW_USERMASTER WHERE ESNTL_ID = nts.TRNSMITER_ID) TRNSMITER_NM
+             ,  DATE_FORMAT(nts.FRST_REGIST_PNTTM,'%Y-%m-%d %H:%i:%s') TRNSMITER_PNTTM
+             ,  ntm.NOTE_SJ
+             ,  ntm.NOTE_CN
+             ,  ntm.ATCH_FILE_ID
+             ,  ntr.RCVER_ID
+             ,  (SELECT USER_NM FROM VIEW_USERMASTER WHERE ESNTL_ID = ntr.RCVER_ID) RCVER_NM
+             ,  DATE_FORMAT(ntr.FRST_REGIST_PNTTM,'%Y-%m-%d %H:%i:%s') RCVER_PNTTM
+             ,  ntr.OPEN_YN
+             ,  ntr.RECPTN_SE
+          FROM  TB_NOTE ntm
+          LEFT  JOIN TB_NOTETRNSMIT nts
+            ON  ntm.NOTE_ID = #{noteId}
+           AND  ntm.NOTE_ID = nts.NOTE_ID
+          LEFT  JOIN TB_NOTERECPTN ntr
+            ON  nts.NOTE_ID = ntr.NOTE_ID
+           AND  nts.NOTE_TRNSMIT_ID = ntr.NOTE_TRNSMIT_ID
+         WHERE  ntr.NOTE_ID = #{noteId}
+           AND  ntr.NOTE_TRNSMIT_ID = #{noteTrnsmitId}
+           AND  ntr.NOTE_RECPTN_ID = #{noteRecptnId}
+    </select>
+
+    <select id="selectNoteRecptnCnt" parameterType="NoteRecptnVO" resultType="java.lang.Integer">
+        SELECT  COUNT(*) totcnt
+          FROM  TB_NOTE ntm
+         INNER  JOIN TB_NOTETRNSMIT nts
+            ON  ntm.NOTE_ID = nts.NOTE_ID
+         INNER  JOIN TB_NOTERECPTN ntr
+            ON  nts.NOTE_ID = ntr.NOTE_ID
+           AND  nts.NOTE_TRNSMIT_ID = ntr.NOTE_TRNSMIT_ID
+           AND  (IFNULL(ntr.DELETE_AT,'N') = 'N' OR ntr.DELETE_AT = '')
+         WHERE  ntr.RCVER_ID = #{rcverId}
+        <include refid="searchNoteRecptn"/>
+    </select>
+
+    <select id="selectNoteTrnsmitRelationCnt" resultType="java.lang.Integer">
+        SELECT  COUNT(NOTE_ID) CNT
+          FROM  TB_NOTETRNSMIT
+         WHERE  DELETE_AT = 'Y'
+           AND  NOTE_ID = #{noteId}
+           AND  NOTE_TRNSMIT_ID = #{noteTrnsmitId}
+    </select>
+
+    <select id="selectNoteRecptnRelationCnt" resultType="java.lang.Integer">
+        SELECT  COUNT(NOTE_ID) CNT
+          FROM  TB_NOTERECPTN
+         WHERE  NOTE_ID = #{noteId}
+           AND  NOTE_TRNSMIT_ID = #{noteTrnsmitId}
+    </select>
+
+    <update id="updateNoteRecptnRelationOpenYn">
+        UPDATE  TB_NOTERECPTN
+           SET  OPEN_YN = 'Y'
+             ,  LAST_UPDT_PNTTM = sysdate()
+             ,  LAST_UPDUSR_ID = #{lastUpdusrId}
+         WHERE  NOTE_ID = #{noteId}
+           AND  NOTE_TRNSMIT_ID = #{noteTrnsmitId}
+           AND  NOTE_RECPTN_ID = #{noteRecptnId}
+    </update>
+
+    <delete id="deleteNoteRecptnRelation">
+        DELETE  FROM TB_NOTERECPTN
+         WHERE  NOTE_ID = #{noteId}
+           AND  NOTE_TRNSMIT_ID = #{noteTrnsmitId}
+           AND  NOTE_RECPTN_ID = #{noteRecptnId};
+
+        DELETE  FROM TB_NOTETRNSMIT
+         WHERE  NOTE_ID = #{noteId}
+           AND  NOTE_TRNSMIT_ID = #{noteTrnsmitId};
+
+        DELETE  FROM TB_NOTE WHERE NOTE_ID = #{noteId};
+    </delete>
+
+    <delete id="deleteNoteRecptn">
+        UPDATE  TB_NOTERECPTN
+           SET  DELETE_AT = 'Y'
+             ,  LAST_UPDT_PNTTM = sysdate()
+             ,  LAST_UPDUSR_ID = #{lastUpdusrId}
+         WHERE  NOTE_ID = #{noteId}
+           AND  NOTE_TRNSMIT_ID = #{noteTrnsmitId}
+           AND  NOTE_RECPTN_ID = #{noteRecptnId}
+    </delete>
+
+    <delete id="deleteNoteTrnsmit">
+        DELETE  FROM TB_NOTETRNSMIT
+         WHERE  NOTE_ID = #{noteId}
+           AND  NOTE_TRNSMIT_ID = #{noteTrnsmitId}
+    </delete>
+
+    <delete id="deleteNoteManage">
+        DELETE FROM TB_NOTE WHERE NOTE_ID = #{noteId};
+    </delete>
+</mapper>

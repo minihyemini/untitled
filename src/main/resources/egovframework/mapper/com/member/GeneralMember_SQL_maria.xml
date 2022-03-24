@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="jisungsoft.com.repository.member.GeneralMemberMapper">
+
+    <sql id="searchMemberList">
+        <if test="@egovframework.com.cmm.util.EgovMybaitsUtil@isNotEmpty(searchKeyword)">
+            <if test="searchCondition == 0">
+                AND
+                A.MBER_ID LIKE CONCAT('%', #{searchKeyword}, '%')
+                OR
+                A.MBER_NM LIKE CONCAT('%', #{searchKeyword}, '%')
+            </if>
+            <if test="searchCondition == 1">
+                AND
+                A.MBER_ID LIKE CONCAT('%', #{searchKeyword}, '%')
+            </if>
+            <if test="searchCondition == 2">
+                AND
+                A.MBER_NM LIKE CONCAT('%', #{searchKeyword}, '%')
+            </if>
+        </if>
+    </sql>
+
+    <select id="selectGeneralMemberList" parameterType="GeneralMember" resultType="GeneralMember">
+        SELECT
+            A.ESNTL_ID AS uniqId,
+            'GNR' AS userTy,
+            A.MBER_ID,
+            A.MBER_NM,
+            A.MBER_EMAIL_ADRES,
+            A.MBTLNUM,
+            A.GROUP_ID,
+            A.MBER_STTUS_CODE,
+            A.SBSCRB_DE,
+            A.LOCK_AT,
+            B.AUTHOR_CODE
+        FROM
+            TB_GNRLMBER A
+        LEFT OUTER JOIN TB_EMPLYRSCRTYESTBS B ON A.ESNTL_ID = B.SCRTY_DTRMN_TRGET_ID
+        WHERE
+            1 = 1
+            <include refid="searchMemberList"/>
+        ORDER BY
+            A.SBSCRB_DE DESC
+        LIMIT #{recordCountPerPage} OFFSET #{firstIndex}
+    </select>
+
+    <select id="selectGeneralMemberAllList" resultType="GeneralMember">
+        SELECT
+            A.ESNTL_ID AS uniqId,
+            'GNR' AS userTy,
+            A.MBER_ID,
+            A.MBER_NM,
+            A.MBER_EMAIL_ADRES,
+            A.MBTLNUM,
+            A.GROUP_ID,
+            A.MBER_STTUS_CODE,
+            A.SBSCRB_DE,
+            A.LOCK_AT,
+            B.AUTHOR_CODE
+        FROM
+            TB_GNRLMBER A
+        LEFT OUTER JOIN TB_EMPLYRSCRTYESTBS B ON A.ESNTL_ID = B.SCRTY_DTRMN_TRGET_ID
+        WHERE
+        1 = 1
+        <include refid="searchMemberList"/>
+        ORDER BY
+        A.SBSCRB_DE DESC
+    </select>
+
+    <select id="selectGeneralMemberListTotCnt" resultType="java.lang.Integer">
+        SELECT
+            COUNT(1) totcnt
+        FROM
+        (
+            SELECT
+                ESNTL_ID AS uniqId
+            FROM
+                TB_GNRLMBER A
+            LEFT OUTER JOIN TB_EMPLYRSCRTYESTBS C ON A.ESNTL_ID = C.SCRTY_DTRMN_TRGET_ID
+        WHERE
+        1 = 1
+        <include refid="searchMemberList"/>
+        ) cnt
+    </select>
+
+    <select id="selectGeneralMemberDetail" resultType="GeneralMember">
+        SELECT
+            A.MBER_ID,
+            A.PASSWORD,
+            A.MBER_NM,
+            A.ZIP,
+            A.ADRES,
+            A.DETAIL_ADRES,
+            A.MBER_STTUS_CODE,
+            A.MBTLNUM,
+            A.GROUP_ID,
+            A.MBER_EMAIL_ADRES,
+            A.SBSCRB_DE,
+            A.SEXDSTN_CODE,
+            A.BRTHDY,
+            A.ESNTL_ID,
+            A.LOCK_AT,
+            B.AUTHOR_CODE
+        FROM
+            TB_GNRLMBER A
+                LEFT OUTER JOIN TB_EMPLYRSCRTYESTBS B ON A.ESNTL_ID = B.SCRTY_DTRMN_TRGET_ID
+        WHERE
+            A.ESNTL_ID = #{uniqId}
+    </select>
+    
+    <select id="selectGeneralMemberByUniqidAndPassword" resultType="GeneralMember">
+        SELECT
+            PASSWORD AS password
+        FROM
+            TB_GNRLMBER
+        WHERE
+            ESNTL_ID = #{uniqId}
+    </select>
+    
+    <insert id="insertGeneralMember">
+        INSERT INTO
+            TB_GNRLMBER
+        (
+            MBER_ID,
+            PASSWORD,
+            MBER_NM,
+            AREA_NO,
+            ZIP,
+            ADRES,
+            DETAIL_ADRES,
+            MBER_STTUS_CODE,
+            MBTLNUM,
+            OFFM_TELNO,
+            GROUP_ID,
+            MBER_EMAIL_ADRES,
+            SEXDSTN_CODE,
+            ESNTL_ID,
+            BRTHDY,
+            SBSCRB_DE
+        ) VALUES (
+             #{mberId},
+             #{password},
+             #{mberNm},
+             #{areaNo},
+             #{zip},
+             #{adres},
+             #{detailAdres},
+             #{mberSttusCode},
+             #{mbtlnum},
+             #{offmTelno},
+             #{groupId},
+             #{mberEmailAdres},
+             #{sexdstnCode},
+             #{uniqId},
+             #{brthdy},
+             sysdate()
+        )
+    </insert>
+    
+    <update id="updateGeneralMember">
+        UPDATE
+            TB_GNRLMBER
+        SET
+        <if test="groupId != null and groupId neq ''">
+            GROUP_ID = #{groupId},
+        </if>
+        <if test="mberSttusCode != null and mberSttusCode neq ''">
+            MBER_STTUS_CODE = #{mberSttusCode},
+        </if>
+            MBER_NM = #{mberNm},
+            AREA_NO = #{areaNo},
+            MBTLNUM = #{mbtlnum},
+            OFFM_TELNO = #{offmTelno},
+            ZIP = #{zip},
+            ADRES = #{adres},
+            DETAIL_ADRES = #{detailAdres},
+            SEXDSTN_CODE = #{sexdstnCode},
+            BRTHDY = #{brthdy}
+        WHERE
+            ESNTL_ID = #{uniqId}
+    </update>
+    
+    <delete id="deleteGeneralMember">
+        DELETE FROM
+            TB_GNRLMBER
+        WHERE
+            ESNTL_ID = #{uniqId}
+    </delete>
+
+    <update id="updateGeneralMemberAccount">
+        UPDATE
+            TB_GNRLMBER
+        SET
+            MBER_STTUS_CODE = 'D'
+        WHERE
+            ESNTL_ID = #{uniqId}
+    </update>
+
+    <update id="updateGeneralMemberEmail">
+        UPDATE
+            TB_GNRLMBER
+        SET
+            MBER_ID = #{mberId}
+          , MBER_EMAIL_ADRES = #{mberEmailAdres}
+        WHERE
+            ESNTL_ID = #{uniqId}
+    </update>
+
+    <update id="updateLockIncorrect">
+        UPDATE
+            TB_GNRLMBER
+        SET
+            LOCK_AT = NULL
+          , LOCK_CNT  = NULL
+          , LOCK_LAST_PNTTM = NULL
+        WHERE
+            ESNTL_ID = #{uniqId}
+    </update>
+
+    <update id="updatePasswordGeneralMember">
+        UPDATE
+            TB_GNRLMBER
+        SET
+            PASSWORD = #{password}
+        WHERE
+            ESNTL_ID = #{uniqId}
+    </update>
+</mapper>

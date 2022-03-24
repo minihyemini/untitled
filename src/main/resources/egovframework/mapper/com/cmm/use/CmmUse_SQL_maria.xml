@@ -1,0 +1,562 @@
+<?xml version="1.0" encoding="UTF-8"?><!--Converted at: Wed May 11 15:49:39 KST 2016-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cmmUseDAO">
+<!--
+    <resultMap id="userViewMap" type="egovMap">
+        <result property="esntlId"      column="ESNTL_ID"/>
+        <result property="userId"       column="USER_ID"/>
+        <result property="password"     column="PASSWORD"/>
+        <result property="userNm"       column="USER_NM"/>
+        <result property="userZip"      column="USER_ZIP"/>
+        <result property="userAdres"    column="USER_ADRES"/>
+        <result property="userEmail"    column="USER_EMAIL"/>
+        <result property="groupId"      column="GROUP_ID"/>
+        <result property="userSe"       column="USER_SE"/>
+        <result property="orgnztId"     column="ORGNZT_ID"/>
+        <result property="sbscrbDe"     column="SBSCRB_DE"/>
+        <result property="mbtlnum"      column="MBTLNUM" typeHandler="MobileCipherTypeHandler"/>
+    </resultMap>
+-->
+
+    <sql id="searchUserViewList">
+        <if test="@egovframework.com.cmm.util.EgovMybaitsUtil@isNotEmpty(searchKeyword)">
+            <if test="searchCondition eq 0">
+                AND (USER_NM LIKE CONCAT('%', #{searchKeyword}, '%') OR
+                USER_ID LIKE CONCAT('%', #{searchKeyword}, '%'))
+            </if>
+            <if test="searchCondition eq 1">
+                AND USER_NM LIKE CONCAT('%', #{searchKeyword}, '%')
+            </if>
+            <if test="searchCondition eq 2">
+                AND USER_ID LIKE CONCAT('%', #{searchKeyword}, '%')
+            </if>
+        </if>
+    </sql>
+
+	<select id="selectCmmCodeDetail" parameterType="DefaultCodeVO" resultType="egovMap">
+        SELECT
+            CODE_ID,
+            CODE,
+            CODE_NM,
+            CODE_DC,
+            SORT_ORDR
+        FROM
+            TB_CMMNDETAILCODE
+        WHERE
+            USE_AT = 'Y'
+        AND
+            CODE_ID = #{codeId}
+        <if test="detailCondition == 'orderDesc'">
+            ORDER BY SORT_ORDR ASC
+        </if>
+	</select>
+
+    <select id="selectCmmCodeDetailByCodeIdList" parameterType="DefaultCodeVO" resultType="egovMap">
+        SELECT
+            CODE_ID,
+            CODE,
+            CODE_NM,
+            CODE_DC,
+            SORT_ORDR
+        FROM
+            TB_CMMNDETAILCODE
+        WHERE
+            USE_AT = 'Y'
+        AND
+            CODE_ID = #{codeId}
+        ORDER BY SORT_ORDR ASC
+    </select>
+
+    <select id="selectCmmCodeDetailByCode" parameterType="DefaultCodeVO" resultType="DefaultCodeVO">
+        SELECT
+            CODE_ID,
+            CODE,
+            CODE_NM,
+            CODE_DC,
+            SORT_ORDR
+        FROM
+            TB_CMMNDETAILCODE
+        WHERE
+            USE_AT = 'Y'
+        AND
+            CODE = #{code}
+        ORDER BY SORT_ORDR ASC
+    </select>
+
+    <select id="selectCmmCodeByClCodeList" parameterType="DefaultCodeVO" resultType="egovMap">
+        SELECT
+            CODE_ID,
+            CODE_ID_NM,
+            CODE_ID_DC,
+            USE_AT,
+            CL_CODE,
+            FRST_REGIST_PNTTM,
+            FRST_REGISTER_ID,
+            LAST_UPDT_PNTTM,
+            LAST_UPDUSR_ID
+        FROM
+            TB_CMMNCODE
+        WHERE
+            USE_AT = 'Y'
+        AND
+            CL_CODE = #{clCode}
+    </select>
+
+    <select id="selectCmmCodeByCodeId" parameterType="DefaultCodeVO" resultType="DefaultCodeVO">
+        SELECT
+            CODE_ID,
+            CODE_ID_NM,
+            CODE_ID_DC,
+            USE_AT,
+            CL_CODE,
+            FRST_REGIST_PNTTM,
+            FRST_REGISTER_ID,
+            LAST_UPDT_PNTTM,
+            LAST_UPDUSR_ID
+        FROM
+            TB_CMMNCODE
+        WHERE
+            USE_AT = 'Y'
+        AND
+            CODE_ID = #{codeId}
+    </select>
+
+    <select id="selectCmmClCodeByClCode" parameterType="DefaultCodeVO" resultType="DefaultCodeVO">
+        SELECT
+            CL_CODE,
+            CL_CODE_NM,
+            CL_CODE_DC,
+            USE_AT,
+            FRST_REGIST_PNTTM,
+            FRST_REGISTER_ID,
+            LAST_UPDT_PNTTM,
+            LAST_UPDUSR_ID
+        FROM
+            TB_CMMNCLCODE
+        WHERE
+            USE_AT = 'Y'
+          AND
+            CL_CODE = #{clCode}
+    </select>
+
+    <select id="selectCmmClCodeList" parameterType="DefaultCodeVO" resultType="egovMap">
+        SELECT
+            CL_CODE,
+            CL_CODE_NM,
+            CL_CODE_DC,
+            USE_AT,
+            FRST_REGIST_PNTTM,
+            FRST_REGISTER_ID,
+            LAST_UPDT_PNTTM,
+            LAST_UPDUSR_ID
+        FROM
+            TB_CMMNCLCODE
+        WHERE
+            USE_AT = 'Y'
+    </select>
+
+    <select id="selectOgrnztIdDetail" parameterType="DefaultCodeVO" resultType="CmmDetailCode">
+            SELECT
+                #{tableNm} AS CODE_ID,
+                ORGNZT_ID AS CODE,
+                ORGNZT_NM AS CODE_NM,
+                ORGNZT_DC AS CODE_DC
+            FROM
+                TB_ORGNZTINFO
+            WHERE 1=1
+            <if test='haveDetailCondition == "Y"'>
+            AND
+                ORGNZT_ID  LIKE  #{detailConditionValue}
+            </if>
+    </select>
+    
+    <select id="selectCmmGroupList" parameterType="CmmGroup" resultType="egovMap">
+        SELECT
+            A.GROUP_ID,
+            A.GROUP_NM,
+            A.GROUP_DC,
+            B.CODE,
+            B.CODE_NM
+        FROM
+            TB_AUTHORGROUPINFO A
+        LEFT OUTER JOIN TB_CMMNDETAILCODE B ON A.CODE = B.CODE
+    </select>
+
+    <select id="selectUserViewListAll" parameterType="CmmDetailUser" resultType="egovMap">
+        SELECT
+            usr.ESNTL_ID,
+            usr.USER_ID,
+            usr.PASSWORD,
+            usr.USER_NM,
+            usr.USER_ZIP,
+            usr.USER_ADRES,
+            usr.USER_EMAIL,
+            <if test="openMbtlnum == true">
+                usr.MBTLNUM,
+            </if>
+            usr.GROUP_ID,
+            grp.GROUP_NM,
+            usr.USER_SE,
+            usr.SBSCRB_DE,
+            org.ORGNZT_ID,
+            org.ORGNZT_NM,
+            est.AUTHOR_CODE
+        FROM
+            VIEW_USERMASTER usr
+        LEFT JOIN tb_authorgroupinfo grp ON usr.GROUP_ID = grp.GROUP_ID
+        LEFT JOIN tb_orgnztinfo org ON org.ORGNZT_ID = grp.ORGNZT_ID
+        LEFT OUTER JOIN TB_EMPLYRSCRTYESTBS est ON usr.ESNTL_ID = est.SCRTY_DTRMN_TRGET_ID
+        WHERE
+            1 = 1
+        <include refid="searchUserViewList"/>
+        <if test="userSe != null and userSe neq ''">
+            AND
+            usr.USER_SE = #{userSe}
+        </if>
+        <if test="mbtlnum != null and mbtlnum neq ''">
+            AND
+            usr.MBTLNUM = #{mbtlnum}
+        </if>
+        <if test="authorCode != null and authorCode neq ''">
+            AND
+            est.AUTHOR_CODE = #{authorCode}
+        </if>
+        <if test="groupId != null and groupId neq ''">
+            AND grp.GROUP_ID = #{groupId}
+        </if>
+    </select>
+
+    <select id="selectUserViewDetail" parameterType="CmmDetailUser" resultType="CmmDetailUser">
+        SELECT
+            usr.ESNTL_ID,
+            usr.USER_ID,
+            usr.PASSWORD,
+            usr.USER_NM,
+            usr.USER_ZIP,
+            usr.USER_ADRES,
+            usr.USER_EMAIL,
+            usr.GROUP_ID,
+            usr.USER_SE,
+            org.ORGNZT_ID
+        FROM
+            VIEW_USERMASTER usr
+        LEFT JOIN tb_authorgroupinfo grp ON usr.GROUP_ID = grp.GROUP_ID
+        LEFT JOIN tb_orgnztinfo org ON grp.ORGNZT_ID = org.ORGNZT_ID
+        WHERE
+            usr.ESNTL_ID = #{esntlId}
+    </select>
+
+    <select id="selectUserViewList" parameterType="CmmDetailUser" resultType="egovMap">
+        SELECT
+            ESNTL_ID,
+            USER_ID,
+            PASSWORD,
+            USER_NM,
+            USER_ZIP,
+            USER_ADRES,
+            USER_EMAIL,
+            <if test="openMbtlnum == true">
+                MBTLNUM,
+            </if>
+            GROUP_ID,
+            USER_SE,
+            ORGNZT_ID
+        FROM
+            VIEW_USERMASTER
+        WHERE
+            1 = 1
+        <include refid="searchUserViewList"/>
+        <if test="userSe != null and userSe neq ''">
+            AND USER_SE = #{userSe}
+        </if>
+        <if test="groupIdList != null and groupIdList.size != 0">
+            AND GROUP_ID IN (
+                <foreach collection="groupIdList" item="groupId" separator=",">#{groupId}</foreach>
+            )
+        </if>
+        <if test="groupId != null and groupId neq ''">
+            AND GROUP_ID = #{groupId}
+        </if>
+        LIMIT  #{recordCountPerPage} OFFSET #{firstIndex}
+    </select>
+
+    <select id="selectUserViewNPList" parameterType="CmmDetailUser" resultType="egovMap">
+        SELECT
+            usr.ESNTL_ID,
+            usr.USER_ID,
+            usr.PASSWORD,
+            usr.USER_NM,
+            usr.USER_ZIP,
+            usr.USER_ADRES,
+            usr.USER_EMAIL,
+            usr.GROUP_ID,
+            usr.USER_SE,
+            usr.SBSCRB_DE,
+        est.AUTHOR_CODE
+        FROM
+            VIEW_USERMASTER usr
+        LEFT JOIN TB_EMPLYRSCRTYESTBS est ON usr.ESNTL_ID = est.SCRTY_DTRMN_TRGET_ID
+        WHERE
+            1 = 1
+        <if test="groupId != null and groupId neq ''">
+            AND
+            usr.GROUP_ID = #{groupId}
+        </if>
+    </select>
+
+    <select id="selectUserViewTotCnt" parameterType="CmmDetailUser" resultType="java.lang.Integer">
+        SELECT
+            COUNT(ESNTL_ID)
+        FROM
+            VIEW_USERMASTER
+        WHERE
+        1 = 1
+        <include refid="searchUserViewList"/>
+        <if test="userSe != null and userSe neq ''">
+            AND USER_SE = #{userSe}
+        </if>
+        <if test="groupIdList != null and groupIdList.size != 0">
+            AND GROUP_ID IN (
+            <foreach collection="groupIdList" item="groupId" separator=",">#{groupId}</foreach>
+            )
+        </if>
+        <if test="groupId != null and groupId neq ''">
+            AND GROUP_ID = #{groupId}
+        </if>
+        <if test="searchKeywordMonth != null and searchKeywordMonth neq ''">
+            AND DATE_FORMAT(SBSCRB_DE,'%Y-%m') = #{searchKeywordMonth}
+        </if>
+    </select>
+<!--
+
+    <select id="selectMenuDataList" parameterType="MenuManageVO" resultType="MenuManageVO">
+        SELECT
+            A.MENU_NM,
+            A.PROGRM_FILE_NM,
+            A.MENU_CATEGORY,
+            A.MENU_NO,
+            A.UPPER_MENU_NO,
+            A.MENU_ORDR,
+            A.MENU_DC,
+            A.MENU_LV,
+            A.RELATE_IMAGE_PATH,
+            A.RELATE_IMAGE_NM,
+            B.URL,
+            B.PROGRM_STRE_PATH,
+            A.USE_AT,
+            A.TARGET_AT,
+            B.PROGRM_QUERY,
+            (SELECT COUNT(1) FROM TB_MENUINFO WHERE UPPER_MENU_NO = A.MENU_NO) AS SUB_CNT
+        FROM
+            TB_MENUINFO A,
+            TB_PROGRMLIST B
+        WHERE
+            A.PROGRM_FILE_NM = B.PROGRM_FILE_NM
+        AND
+              A.MENU_LV = #{menuLv}
+        AND
+              A.USE_AT = 'Y'
+        <if test="menuNo != null">
+            AND
+                A.UPPER_MENU_NO = #{menuNo}
+        </if>
+        AND
+              A.MENU_CATEGORY = #{menuCategory}
+        ORDER BY
+            A.MENU_ORDR ASC
+    </select>
+-->
+<!--
+
+    <select id="selectMenuDataDetail" parameterType="MenuManageVO" resultType="MenuManageVO">
+        SELECT
+            A.MENU_NM,
+            A.PROGRM_FILE_NM,
+            A.MENU_CATEGORY,
+            A.MENU_LV,
+            A.MENU_NO,
+            A.UPPER_MENU_NO,
+            (SELECT UPPER_MENU_NO FROM TB_MENUINFO WHERE MENU_NO = A.UPPER_MENU_NO) AS PARENT_MENU_NO,
+            A.MENU_ORDR,
+            A.MENU_DC,
+            A.RELATE_IMAGE_PATH,
+            A.RELATE_IMAGE_NM,
+            B.URL,
+            B.PROGRM_STRE_PATH,
+            A.USE_AT,
+            A.TARGET_AT,
+            B.PROGRM_QUERY,
+            (SELECT MENU_NM FROM TB_MENUINFO tbl WHERE tbl.MENU_NO = CASE WHEN A.MENU_LV = 1 THEN A.MENU_NO WHEN A.UPPER_MENU_NO = 0 THEN A.MENU_NO ELSE A.UPPER_MENU_NO END LIMIT 1) as UPPER_MENU_NM
+        FROM
+            TB_MENUINFO A
+                LEFT OUTER JOIN TB_MENUCREATDTLS C ON A.MENU_NO = C.MENU_NO,
+            TB_PROGRMLIST B
+        WHERE
+            A.PROGRM_FILE_NM = B.PROGRM_FILE_NM
+            AND
+                A.MENU_CATEGORY = #{menuCategory}
+            <if test="upperMenuNo != null and upperMenuNo neq 0">
+                AND
+                A.UPPER_MENU_NO = #{upperMenuNo}
+            </if>
+            <choose>
+                <when test="menuNo != null and menuNo neq 0">
+                    AND
+                    A.MENU_NO = #{menuNo}
+                </when>
+                <otherwise>
+                    AND
+                    B.URL LIKE CONCAT(#{url},'%')
+                </otherwise>
+            </choose>
+            <if test="progrmQuery != null and progrmQuery neq ''">
+                AND
+                B.PROGRM_QUERY LIKE CONCAT('%',#{progrmQuery})
+            </if>
+            <if test="menuLv != null">
+                AND
+                A.MENU_LV = #{menuLv}
+            </if>
+        LIMIT 1
+    </select>
+-->
+
+    <select id="selectAuthDataList" resultType="egovMap">
+        SELECT
+            AUTHOR_CODE,
+            AUTHOR_NM,
+            AUTHOR_DC,
+            AUTHOR_CREAT_DE
+        FROM
+            TB_AUTHORINFO
+    </select>
+
+    <select id="selectMenuCreatDtls" resultType="egovMap">
+        SELECT
+            A.MENU_NO,
+            A.AUTHOR_CODE,
+            B.MENU_NM,
+            B.PROGRM_FILE_NM,
+            B.MENU_CATEGORY,
+            B.UPPER_MENU_NO,
+            B.USE_AT,
+            B.TARGET_AT
+        FROM
+            TB_MENUCREATDTLS A,
+            TB_MENUINFO B
+        WHERE
+            A.MENU_NO = B.MENU_NO
+    </select>
+
+    <select id="selectPopupShowList" parameterType="PopupVO" resultType="PopupVO">
+        <![CDATA[
+        SELECT
+            pop.POPUP_ID
+             ,  pop.POPUP_SJ_NM
+             ,  pop.POPUP_CN
+             ,  pop.ATCH_FILE_ID
+             ,  (SELECT FILE_SN FROM TB_FILEDETAIL WHERE ATCH_FILE_ID = pop.ATCH_FILE_ID) AS FILE_SN
+             ,  pop.FILE_URL
+             ,  pop.POPUP_WIDTH_LC
+             ,  pop.POPUP_WIDTH_SIZE
+             ,  DATE_FORMAT(pop.NTCE_BGNDE, '%Y-%m-%d') as NTCE_BGNDE
+             ,  DATE_FORMAT(pop.NTCE_ENDDE, '%Y-%m-%d') as NTCE_ENDDE
+             ,  pop.STOPVEW_SETUP_AT
+             ,  pop.NTCE_AT
+             ,  pop.POPUP_VRTICL_LC
+             ,  pop.POPUP_VRTICL_SIZE
+             ,  DATE_FORMAT(pop.FRST_REGIST_PNTTM, '%Y-%m-%d') as FRST_REGIST_PNTTM
+        FROM  TB_POPUPMANAGE pop
+        WHERE  1 = 1
+          AND  DATE(pop.NTCE_BGNDE)<= DATE(NOW())
+          AND  DATE(pop.NTCE_ENDDE)>= DATE(NOW())
+          AND	pop.NTCE_AT = 'Y'
+        ORDER  BY pop.FRST_REGIST_PNTTM DESC
+        ]]>
+    </select>
+
+    <select id="selectPopupShowListCnt" parameterType="PopupVO" resultType="java.lang.Integer">
+        <![CDATA[
+        SELECT  COUNT(POPUP_ID)
+        FROM  TB_POPUPMANAGE pop
+        WHERE  1 = 1
+          AND  DATE(NTCE_BGNDE)<= DATE(NOW())
+          AND  DATE(NTCE_ENDDE)>= DATE(NOW())
+          AND  NTCE_AT = 'Y'
+        ]]>
+    </select>
+
+    <select id="selectNoteList" parameterType="NoteVO" resultType="NoteVO">
+        <![CDATA[
+      SELECT  ntm.*
+           ,  (SELECT  USER_NM
+                 FROM  VIEW_USERMASTER
+                WHERE  ESNTL_ID = ntm.FRST_REGISTER_ID) as TRNSMITER_ID
+           ,  CASE WHEN  TIMEDIFF(NOW(), ntm.FRST_REGIST_PNTTM) < 1 THEN CONCAT(MINUTE(TIMEDIFF(NOW(), ntm.FRST_REGIST_PNTTM)), ' 분전')
+                   WHEN  TIMEDIFF(NOW(), ntm.FRST_REGIST_PNTTM) < 24 THEN CONCAT(HOUR(TIMEDIFF(NOW(), ntm.FRST_REGIST_PNTTM)), ' 시간전')
+                   ELSE CONCAT(DATEDIFF(NOW(), ntm.FRST_REGIST_PNTTM),' 일전') END TIME_STR
+        FROM  TB_NOTE ntm
+       INNER  JOIN TB_NOTETRNSMIT nts
+          ON  ntm.NOTE_ID = nts.NOTE_ID
+       INNER  JOIN TB_NOTERECPTN ntr
+          ON  nts.NOTE_ID = ntr.NOTE_ID
+         AND  nts.NOTE_TRNSMIT_ID = ntr.NOTE_TRNSMIT_ID
+         AND  (IFNULL(ntr.DELETE_AT,'N') = 'N' OR ntr.DELETE_AT = '')
+         AND  OPEN_YN = 'N'
+        WHERE  RCVER_ID = #{rcverId}
+        LIMIT  3
+        ]]>
+    </select>
+
+    <select id="selectNoteListCnt" parameterType="NoteVO" resultType="java.lang.Integer">
+         SELECT  COUNT(*)
+           FROM  TB_NOTE ntm
+          INNER  JOIN TB_NOTETRNSMIT nts
+             ON  ntm.NOTE_ID = nts.NOTE_ID
+          INNER  JOIN TB_NOTERECPTN ntr
+             ON  nts.NOTE_ID = ntr.NOTE_ID
+            AND  nts.NOTE_TRNSMIT_ID = ntr.NOTE_TRNSMIT_ID
+            AND  (IFNULL(ntr.DELETE_AT,'N') = 'N' OR ntr.DELETE_AT = '')
+            AND  OPEN_YN = 'N'
+          WHERE  RCVER_ID = #{rcverId}
+    </select>
+
+    <select id="selectCmmBbsArticleAllList" parameterType="ArticleDataVO" resultType="egovMap">
+        SELECT
+            A.NTT_ID,
+            A.BBS_ID,
+            A.NTT_NO,
+            A.NTT_SJ,
+            A.NTT_CN,
+            A.ANSWER_AT,
+            A.ANSWER_LC,
+            A.SORT_ORDR,
+            A.RDCNT,
+            A.USE_AT,
+            A.NTCE_BGNDE,
+            A.NTCE_ENDDE,
+            A.NTCR_ID,
+            A.NTCR_NM,
+            A.ATCH_FILE_ID,
+            A.THUMB_ATCH_FILE_ID,
+            A.NOTICE_AT,
+            A.SJ_BOLD_AT,
+            A.SECRET_AT,
+            A.REPLY_AT,
+            A.FRST_REGIST_PNTTM,
+            A.FRST_REGISTER_ID,
+            A.LAST_UPDT_PNTTM,
+            A.LAST_UPDUSR_ID,
+            A.NTT_CN_LOOKUP,
+            B.BBS_NM,
+            C.CODE_NM
+        FROM
+            TB_BBS A
+        LEFT OUTER JOIN TB_BBSMASTER B ON A.BBS_ID = B.BBS_ID
+        LEFT OUTER JOIN tb_cmmndetailcode C ON B.BBS_TY_CODE = C.CODE
+        ORDER BY
+            FRST_REGIST_PNTTM DESC
+        LIMIT 5;
+    </select>
+</mapper>

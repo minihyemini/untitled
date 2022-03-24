@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="jisungsoft.com.repository.sec.AuthorGroupMapper">
+
+    <sql id="searchAuthorGroupUserList">
+        <if test="@egovframework.com.cmm.util.EgovMybaitsUtil@isNotEmpty(searchKeyword)">
+            <if test="searchCondition eq ''">
+                AND
+                A.USER_ID LIKE CONCAT('%' , #{searchKeyword}, '%')
+                OR
+                A.USER_NM LIKE CONCAT('%' , #{searchKeyword}, '%')
+            </if>
+            <if test="searchCondition == 0">
+                AND
+                A.USER_ID LIKE CONCAT('%' , #{searchKeyword}, '%')
+            </if>
+            <if test="searchCondition == 1">
+                AND
+                A.USER_NM LIKE CONCAT('%' , #{searchKeyword}, '%')
+            </if>
+        </if>
+    </sql>
+    <select id="selectAuthorGroupUserList" resultType="AuthorGroup">
+        SELECT
+            A.USER_ID,
+            A.USER_NM,
+            A.GROUP_ID,
+            C.GROUP_NM,
+            A.USER_SE AS MBER_TY_CODE,
+            CASE WHEN A.USER_SE = 'USR' THEN '업무회원' WHEN A.USER_SE = 'GNR' THEN '일반회원' WHEN A.USER_SE = 'ENT' THEN '기업회원' ELSE '' END AS MBER_TY_NM,
+            A.ESNTL_ID,
+            B.AUTHOR_CODE
+        FROM
+            VIEW_USERMASTER A
+        LEFT OUTER JOIN TB_EMPLYRSCRTYESTBS B ON A.ESNTL_ID = B.SCRTY_DTRMN_TRGET_ID
+        LEFT OUTER JOIN TB_AUTHORGROUPINFO C ON A.GROUP_ID = C.GROUP_ID
+        WHERE
+            A.GROUP_ID = #{groupId}
+            <include refid="searchAuthorGroupUserList"/>
+    </select>
+
+    <select id="selectAuthorGroupUserListTotCnt" resultType="java.lang.Integer">
+        SELECT
+            COUNT(1)
+        FROM
+            (
+                SELECT
+                    A.USER_ID
+                FROM
+                    VIEW_USERMASTER A
+                LEFT OUTER JOIN TB_EMPLYRSCRTYESTBS B ON A.ESNTL_ID = B.SCRTY_DTRMN_TRGET_ID
+                WHERE
+                    A.GROUP_ID = #{groupId}
+                <include refid="searchAuthorGroupUserList"/>
+            ) AS cnt
+    </select>
+
+    <select id="selectAuthorList" resultType="AuthorGroup">
+        SELECT
+            AUTHOR_CODE,
+            AUTHOR_NM
+        FROM
+            TB_AUTHORINFO
+        ORDER BY AUTHOR_CODE ASC
+    </select>
+
+    <select id="selectGroupList" resultType="AuthorGroup">
+        SELECT
+            GROUP_ID,
+            GROUP_NM
+        FROM
+            TB_AUTHORGROUPINFO
+    </select>
+
+    <select id="selectAuthorGroup" resultType="AuthorGroup">
+        SELECT
+            A.USER_ID,
+            A.USER_NM,
+            A.GROUP_ID,
+            C.GROUP_NM,
+            A.USER_SE AS MBER_TY_CODE,
+            CASE
+                WHEN A.USER_SE = 'USR' THEN
+                    '업무회원'
+                WHEN A.USER_SE = 'GNR' THEN
+                    '일반회원'
+                WHEN A.USER_SE = 'ENT' THEN
+                    '기업회원'
+                ELSE
+                    ''
+                END AS MBER_TY_NM,
+            A.ESNTL_ID,
+            B.AUTHOR_CODE
+        FROM
+            VIEW_USERMASTER A
+                LEFT OUTER JOIN TB_EMPLYRSCRTYESTBS B ON A.ESNTL_ID = B.SCRTY_DTRMN_TRGET_ID
+                LEFT OUTER JOIN TB_AUTHORGROUPINFO C ON A.GROUP_ID = C.GROUP_ID
+        WHERE
+            A.ESNTL_ID = #{esntlId}
+    </select>
+
+    <select id="selectAuthorListTotCnt" resultType="java.lang.Integer">
+        SELECT
+            COUNT(1)
+        FROM
+             TB_EMPLYRSCRTYESTBS
+        WHERE
+            SCRTY_DTRMN_TRGET_ID = #{esntlId}
+    </select>
+
+    <insert id="insertAuthorGroupUser">
+        INSERT INTO
+            TB_EMPLYRSCRTYESTBS
+        (
+            SCRTY_DTRMN_TRGET_ID,
+            MBER_TY_CODE,
+            AUTHOR_CODE
+        ) VALUES (
+            #{esntlId},
+            #{mberTyCode},
+            #{authorCode}
+        )
+    </insert>
+
+    <update id="updateAuthorGroupUser">
+        UPDATE
+            TB_EMPLYRSCRTYESTBS
+        SET
+            MBER_TY_CODE = #{mberTyCode},
+            AUTHOR_CODE = #{authorCode}
+        WHERE
+            SCRTY_DTRMN_TRGET_ID = #{esntlId}
+    </update>
+
+    <delete id="deleteAuthorGroupUser">
+        DELETE FROM
+            TB_EMPLYRSCRTYESTBS
+        WHERE
+            SCRTY_DTRMN_TRGET_ID = #{esntlId}
+    </delete>
+</mapper>

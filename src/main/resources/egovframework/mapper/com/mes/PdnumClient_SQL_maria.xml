@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+		"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="jisungsoft.com.repository.mes.PdnumClientMapper">
+
+	<sql id="searchPdnumClient">
+		<if test="@egovframework.com.cmm.util.EgovMybaitsUtil@isNotEmpty(searchKeyword)">
+			<if test="searchCondition eq 0">
+
+			</if>
+			<if test="searchCondition eq 1">
+
+			</if>
+			<if test="searchCondition eq 2">
+
+			</if>
+			<if test="searchCondition eq 3">
+
+			</if>
+			<if test="searchCondition eq 4">
+
+			</if>
+		</if>
+		<if test="cltId != null and cltId > 0">
+			AND
+			A.CLT_ID = #{cltId}
+		</if>
+	</sql>
+
+	<select id="selectPdnumClientAllList" resultType="PdnumClient">
+		SELECT A.PC_ID
+			, A.CLT_ID
+			, A.PDNUM_ID
+			, B.PDNUM_NM
+			, B.PDNUM_NUM
+			, B.PDNUM_TYPE
+			, (SELECT CODE_NM FROM TB_CMMNDETAILCODE WHERE CODE = B.PDNUM_TYPE) AS PDNUM_TYPE_NM
+			, B.PDNUM_WGHT
+			, B.PDNUM_STND
+			, B.PDNUM_SFSTCK
+			, B.PDNUM_CODE
+			, B.PDNUM_MTRSCODE
+			, B.PDNUM_IOTYPE
+			, B.PDNUM_DRWAPPLDATE
+			, B.PDNUM_DRWQNTY
+			, B.PDNUM_UNIT
+		FROM
+		    TB_PDNUMCLIENT A LEFT JOIN TB_PDNUM B ON A.PDNUM_ID = B.PDNUM_ID
+		LEFT JOIN TB_CLIENT C ON A.CLT_ID = C.CLT_ID
+		WHERE
+		1 = 1
+		<include refid="searchPdnumClient"/>
+	</select>
+
+	<select id="selectPdnumClientList" resultType="PdnumClient">
+		SELECT A.PC_ID
+			, A.CLT_ID
+			, A.PDNUM_ID
+			, B.PDNUM_NM
+			, B.PDNUM_NUM
+			, B.PDNUM_TYPE
+			, (SELECT CODE_NM FROM TB_CMMNDETAILCODE WHERE CODE = B.PDNUM_TYPE) AS PDNUM_TYPE_NM
+			, B.PDNUM_WGHT
+			, B.PDNUM_STND
+			, B.PDNUM_SFSTCK
+			, B.PDNUM_CODE
+			, B.PDNUM_MTRSCODE
+			, B.PDNUM_IOTYPE
+			, B.PDNUM_DRWAPPLDATE
+			, B.PDNUM_DRWQNTY
+			, B.PDNUM_UNIT
+		FROM
+			TB_PDNUMCLIENT A LEFT JOIN TB_PDNUM B ON A.PDNUM_ID = B.PDNUM_ID
+		LEFT JOIN TB_CLIENT C ON A.CLT_ID = C.CLT_ID
+		WHERE
+		1 = 1
+		<include refid="searchPdnumClient"/>
+		LIMIT  #{recordCountPerPage} OFFSET #{firstIndex}
+	</select>
+
+	<select id="selectPdnumClientDetail" resultType="PdnumClient">
+		SELECT A.PC_ID
+			 , A.CLT_ID
+			 , A.PDNUM_ID
+			 , B.PDNUM_NM
+			 , B.PDNUM_NUM
+			 , B.PDNUM_TYPE
+			 , (SELECT CODE_NM FROM TB_CMMNDETAILCODE WHERE CODE = B.PDNUM_TYPE) AS PDNUM_TYPE_NM
+			 , B.PDNUM_WGHT
+			 , B.PDNUM_STND
+			 , B.PDNUM_SFSTCK
+			 , B.PDNUM_CODE
+			 , B.PDNUM_MTRSCODE
+			 , B.PDNUM_IOTYPE
+			 , B.PDNUM_DRWAPPLDATE
+			 , B.PDNUM_DRWQNTY
+			 , B.PDNUM_UNIT
+		FROM
+			TB_PDNUMCLIENT A LEFT JOIN TB_PDNUM B ON A.PDNUM_ID = B.PDNUM_ID
+			LEFT JOIN TB_CLIENT C ON A.CLT_ID = C.CLT_ID
+		WHERE
+			A.PC_ID = #{pcId}
+	</select>
+
+	<select id="selectPdnumClientDetailListCnt" resultType="java.lang.Integer">
+		SELECT COUNT(1) FROM(
+		    SELECT * FROM TB_PDNUMCLIENT
+		    WHERE
+		    1 = 1
+			<include refid="searchPdnumClient"/>
+		) as cnt
+	</select>
+
+	<insert id="insertPdnumClientData">
+		<selectKey keyProperty="pcId" resultType="java.lang.Integer" order="BEFORE">
+			SELECT IFNULL(MAX(PC_ID),0)+1 AS PC_ID  FROM TB_PDNUMCLIENT
+		</selectKey>
+
+		INSERT INTO  TB_PDNUMCLIENT(
+			PC_ID
+			, CLT_ID
+			, PDNUM_ID
+		) VALUES(
+			#{pcId}
+			, #{cltId}
+			, #{pdnumId}
+		)
+
+	</insert>
+
+	<update id="updatePdnumClientData">
+		UPDATE
+		    TB_PDNUMCLIENT
+		SET
+			CLT_ID = #{cltId}
+			, PDNUM_ID = #{pdnumId}
+		WHERE
+			PC_ID = #{pcId}
+	</update>
+
+	<delete id="deletePdnumClientData">
+		DELETE FROM
+			TB_PDNUMCLIENT
+		WHERE
+			PC_ID = #{pcId}
+	</delete>
+</mapper>

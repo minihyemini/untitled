@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+		"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="jisungsoft.com.repository.mes.FciltsPdNumMapper">
+
+	<sql id="searchFciltsPdNum">
+		<if test="@egovframework.com.cmm.util.EgovMybaitsUtil@isNotEmpty(searchKeyword)">
+			<if test="searchCondition eq 0">
+				AND(
+				PDF.PDFCILTS_CODE LIKE CONCAT ('%', #{searchKeyword},'%')
+				OR
+				PDF.PDFCILTS_NM LIKE CONCAT ('%', #{searchKeyword},'%')
+				)
+			</if>
+			<if test="searchCondition eq 1">
+				AND
+				PDF.PDFCILTS_CODE LIKE CONCAT ('%', #{searchKeyword},'%')
+			</if>
+			<if test="searchCondition eq 2">
+				AND
+				PDF.PDFCILTS_NM LIKE CONCAT ('%', #{searchKeyword},'%')
+			</if>
+		</if>
+	</sql>
+
+	<select id="selectFciltsPdNumAllList" resultType="FciltsPdNum">
+		SELECT FCPDNUM.FCPD_ID
+			, FCPDNUM.PDNUM_ID
+			, FCPDNUM.PDFCILTS_ID
+			, PD.PDNUM_NUM
+			, PD.PDNUM_NM
+		FROM TB_FCILTSBYPDNUMMNG FCPDNUM
+		    LEFT JOIN TB_PDNUM PD ON FCPDNUM.PDNUM_ID = PD.PDNUM_ID
+		WHERE
+			1 = 1
+		<if test="pdnumId != null">
+			AND FCPDNUM.PDNUM_ID = #{pdnumId}
+		</if>
+		<if test="pdfciltsId != null">
+			AND FCPDNUM.PDFCILTS_ID = #{pdfciltsId}
+		</if>
+		ORDER BY FCPDNUM.FCPD_ID ASC
+	</select>
+
+	<select id="selectFciltsAndPdNumAllList" resultType="FciltsPdNum">
+		SELECT DISTINCT
+			PDF.PDFCILTS_ID,
+			PDF.PDFCILTS_NM,
+			PDF.PDFCILTS_CODE,
+			( SELECT COUNT( PDNUM_ID ) FROM TB_FCILTSBYPDNUMMNG WHERE PDFCILTS_ID = PDF.PDFCILTS_ID ) AS pdNumCnt
+		FROM
+			TB_PDFCILTS PDF
+				LEFT JOIN TB_FCILTSBYPDNUMMNG FCPDNUM ON PDF.PDFCILTS_ID = FCPDNUM.PDFCILTS_ID
+		WHERE
+			1 = 1
+		<include refid="searchFciltsPdNum"/>
+	</select>
+
+	<select id="selectFciltsPdNumList" resultType="FciltsPdNum">
+		SELECT FCPDNUM.FCPD_ID
+			 , FCPDNUM.PDNUM_ID
+			 , FCPDNUM.PDFCILTS_ID
+		FROM TB_FCILTSBYPDNUMMNG FCPDNUM
+		WHERE
+			1 = 1
+		LIMIT  #{recordCountPerPage} OFFSET #{firstIndex}
+		ORDER BY FCPDNUM.FCPD_ID ASC
+	</select>
+
+	<select id="selectFciltsPdNumListCnt" resultType="java.lang.Integer">
+		SELECT COUNT(1) FROM (
+			 SELECT
+			    FCPDNUM.FCPD_ID
+			 FROM
+			    TB_FCILTSBYPDNUMMNG FCPDNUM
+		) as cnt
+	</select>
+
+	<select id="selectFciltsPdNumDetail" resultType="FciltsPdNum">
+		SELECT FCPDNUM.FCPD_ID
+			 , FCPDNUM.PDNUM_ID
+			 , FCPDNUM.PDFCILTS_ID
+		FROM TB_FCILTSBYPDNUMMNG FCPDNUM
+		WHERE
+			FCPDNUM.FCPD_ID = #{fcpdId}
+	</select>
+
+	<insert id="insertFciltsPdNum">
+
+		<selectKey keyProperty="fcpdId" resultType="java.lang.Integer" order="BEFORE">
+			SELECT IFNULL(MAX(FCPD_ID),0)+1 AS FCPD_ID  FROM TB_FCILTSBYPDNUMMNG
+		</selectKey>
+
+		INSERT INTO TB_FCILTSBYPDNUMMNG (
+			FCPD_ID
+			, PDNUM_ID
+			, PDFCILTS_ID
+		) VALUES (
+			#{fcpdId}
+			, #{pdnumId}
+			, #{pdfciltsId}
+		)
+	</insert>
+
+	<update id="updateFciltsPdNum">
+		UPDATE
+			TB_FCILTSBYPDNUMMNG
+		SET
+		  PDNUM_ID = #{pdnumId}
+		  , PDFCILTS_ID = #{pdfciltsId}
+		WHERE
+			FCPD_ID = #{fcpdId}
+	</update>
+
+	<delete id="deleteFciltsPdNum">
+		DELETE FROM TB_FCILTSBYPDNUMMNG
+		WHERE
+			FCPD_ID = #{fcpdId}
+	</delete>
+
+	<delete id="deleteFciltsPdNumByPdfciltsId">
+		DELETE FROM TB_FCILTSBYPDNUMMNG
+		WHERE
+			PDFCILTS_ID = #{pdfciltsId}
+	</delete>
+</mapper>

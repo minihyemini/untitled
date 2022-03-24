@@ -1,0 +1,883 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="rebAiticleDataDAO">
+
+    <sql id="searchRebArticle">
+        <if test="@egovframework.com.cmm.util.EgovMybaitsUtil@isNotEmpty(searchKeyword)">
+            <if test="searchCondition eq 0">
+                AND  (reb.NTT_SJ LIKE CONCAT ('%', #{searchKeyword},'%') OR
+                reb.NTT_CN_LOOKUP LIKE CONCAT ('%', #{searchKeyword},'%') OR
+                usr.USER_NM LIKE CONCAT ('%', #{searchKeyword},'%'))
+            </if>
+            <if test="searchCondition eq 1">
+                AND  reb.NTT_SJ LIKE CONCAT ('%', #{searchKeyword},'%')
+            </if>
+            <if test="searchCondition eq 2">
+                AND  reb.NTT_CN LIKE CONCAT ('%', #{searchKeyword},'%')
+            </if>
+            <if test="searchCondition eq 3">
+                AND usr.USER_NM LIKE CONCAT ('%', #{searchKeyword},'%')
+            </if>
+        </if>
+        <if test="searchFromDate != null and searchFromDate neq ''">
+            AND
+                (
+                DATE_FORMAT(FRST_REGIST_PNTTM,'%Y%m%d') <![CDATA[>=]]> #{searchFromDate}
+                AND DATE_FORMAT(LAST_UPDT_PNTTM,'%Y%m%d') <![CDATA[<=]]> #{searchToDate}
+                )
+        </if>
+        <!-- 대분류/중분류/소분류 검색-->
+        <if test="rebTypeLargeCode != null and rebTypeLargeCode neq ''">
+            AND reb.REB_TYPE_LARGE_CODE = #{rebTypeLargeCode}
+            <if test="rebTypeMediumCode != null and rebTypeMediumCode neq ''">
+                AND reb.REB_TYPE_MEDIUM_CODE = #{rebTypeMediumCode}
+                <if test="rebTypeCode != null and rebTypeCode neq ''">
+                    AND reb.REB_TYPE_CODE = #{rebTypeCode}
+                </if>
+            </if>
+        </if>
+        <!-- 부서명/팀명/등록자 검색-->
+        <if test="searchOrgnztId != null and searchOrgnztId neq ''">
+            AND org.ORGNZT_ID = #{searchOrgnztId}
+            <if test="searchGroupId != null and searchGroupId neq ''">
+                AND grp.GROUP_ID = #{searchGroupId}
+                <if test="searchEsntlId != null and searchEsntlId neq ''">
+                    AND NTCR_ID = #{searchEsntlId}
+                </if>
+            </if>
+        </if>
+        <!-- 진행상황 검색-->
+        <if test="rebProgressCode != null and rebProgressCode neq ''">
+            AND reb.REB_PROGRESS_CODE = #{rebProgressCode}
+        </if>
+
+        <if test="frstRegisterId != null and frstRegisterId neq ''">
+            AND reb.FRST_REGISTER_ID = #{frstRegisterId}
+            OR reb.REB_PROGRESS_CODE = 'PRG005'
+        </if>
+    </sql>
+
+    <sql id="searchRebHistoryArticle">
+        <if test="@egovframework.com.cmm.util.EgovMybaitsUtil@isNotEmpty(searchKeyword)">
+            <if test="searchCondition eq 0">
+
+            </if>
+            <if test="searchCondition eq 1">
+
+            </if>
+            <if test="searchCondition eq 2">
+
+            </if>
+            <if test="searchCondition eq 3">
+
+            </if>
+        </if>
+
+    </sql>
+
+    <!-- 게시판/상담지식 목록-->
+    <select id="selectRebArticleList" parameterType="BbsRebVO" resultType="egovMap">
+        SELECT
+            reb.*,
+            (SELECT COUNT(1) FROM TB_BBSHISTORY where NTT_ID = reb.NTT_ID) as HISTORY_CNT
+        FROM
+            (
+                SELECT
+                    A.*,
+                    B.REB_GRADE_CODE,
+                    B.REB_KEYWORD,
+                    B.REB_PROGRESS_CODE,
+                    B.REB_TYPE_CODE,
+                    B.REB_UNPRO_DESC,
+                    B.REB_REQCODE,
+                    (
+                        SELECT cdl.CL_CODE FROM TB_CMMNDETAILCODE cde
+                        LEFT JOIN TB_CMMNCODE cd ON cde.CODE_ID = cd.CODE_ID
+                        LEFT JOIN TB_CMMNCLCODE cdl ON cd.CL_CODE = cdl.CL_CODE
+                        WHERE
+                        cde.CODE = B.REB_TYPE_CODE
+                    ) AS REB_TYPE_LARGE_CODE,
+                    (
+                        SELECT cdl.CL_CODE_NM FROM TB_CMMNDETAILCODE cde
+                        LEFT JOIN TB_CMMNCODE cd ON cde.CODE_ID = cd.CODE_ID
+                        LEFT JOIN TB_CMMNCLCODE cdl ON cd.CL_CODE = cdl.CL_CODE
+                        WHERE
+                            cde.CODE = B.REB_TYPE_CODE
+                    ) AS REB_TYPE_LARGE_NM,
+                    (
+                        SELECT cd.CODE_ID FROM TB_CMMNDETAILCODE cde
+                        LEFT JOIN TB_CMMNCODE cd ON cde.CODE_ID = cd.CODE_ID
+                        WHERE
+                        cde.CODE = B.REB_TYPE_CODE
+                    ) AS REB_TYPE_MEDIUM_CODE,
+                    (
+                        SELECT cd.CODE_ID_NM FROM TB_CMMNDETAILCODE cde
+                        LEFT JOIN TB_CMMNCODE cd ON cde.CODE_ID = cd.CODE_ID
+                        WHERE
+                            cde.CODE = B.REB_TYPE_CODE
+                    ) AS REB_TYPE_MEDIUM_NM,
+                    (SELECT CODE_NM FROM TB_CMMNDETAILCODE WHERE CODE = B.REB_TYPE_CODE) AS REB_TYPE_SMALL_NM,
+                    (SELECT CODE_NM FROM TB_CMMNDETAILCODE WHERE B.REB_PROGRESS_CODE = CODE) AS REB_PROGRESS_NM,
+                    C.BBS_INTRCN,
+                    C.BOLD_POSBL_AT,
+                    C.SECRET_POSBL_AT,
+                    C.PERIOD_POSBL_AT,
+                    C.ANSWER_POSBL_AT,
+                    C.REPLY_POSBL_AT,
+                    C.FILE_ATCH_POSBL_AT,
+                    C.FILE_CNT,
+                    C.ATCH_POSBL_FILE_SIZE
+                FROM
+                    TB_BBS A LEFT JOIN TB_BBSMASTER C ON A.BBS_ID = C.BBS_ID,
+                    TB_BBSREB B
+                WHERE
+                    A.NTT_ID = B.NTT_ID
+            ) reb
+                LEFT JOIN VIEW_USERMASTER usr ON reb.FRST_REGISTER_ID = usr.ESNTL_ID
+                LEFT JOIN TB_AUTHORGROUPINFO grp ON usr.GROUP_ID = grp.GROUP_ID
+                LEFT JOIN TB_ORGNZTINFO org ON grp.ORGNZT_ID = org.ORGNZT_ID
+        WHERE
+            reb.USE_AT = 'Y'
+        <include refid="searchRebArticle"/>
+        ORDER  BY reb.NTT_NO DESC
+        LIMIT  #{recordCountPerPage} OFFSET #{firstIndex}
+    </select>
+
+    <select id="selectRebArticleNPList" parameterType="BbsRebVO" resultType="egovMap">
+        SELECT
+            reb.*,
+            (SELECT NTT_HSTR_ID FROM TB_BBSHISTORY where NTT_ID = reb.NTT_ID ORDER BY NTT_HSTR_ID DESC LIMIT 1) as NTT_HSTR_ID
+          FROM
+            (
+                SELECT
+                    A.*,
+                    B.REB_GRADE_CODE,
+                    B.REB_KEYWORD,
+                    B.REB_PROGRESS_CODE,
+                    B.REB_TYPE_CODE,
+                    B.REB_UNPRO_DESC,
+                    B.REB_REQCODE,
+                    C.BBS_INTRCN,
+                    C.BOLD_POSBL_AT,
+                    C.SECRET_POSBL_AT,
+                    C.PERIOD_POSBL_AT,
+                    C.ANSWER_POSBL_AT,
+                    C.REPLY_POSBL_AT,
+                    C.FILE_ATCH_POSBL_AT,
+                    C.FILE_CNT,
+                    C.ATCH_POSBL_FILE_SIZE
+                FROM
+                    TB_BBS A LEFT JOIN TB_BBSMASTER C ON A.BBS_ID = C.BBS_ID,
+                    TB_BBSREB B
+                WHERE
+                    A.NTT_ID = B.NTT_ID ) reb
+                LEFT JOIN VIEW_USERMASTER usr ON reb.FRST_REGISTER_ID = usr.ESNTL_ID
+                LEFT JOIN TB_AUTHORGROUPINFO grp ON usr.GROUP_ID = grp.GROUP_ID
+                LEFT JOIN TB_ORGNZTINFO org ON grp.ORGNZT_ID = org.ORGNZT_ID
+         WHERE
+            reb.USE_AT = 'Y'
+         ORDER  BY reb.RDCNT DESC, reb.NTT_NO DESC
+    </select>
+
+    <!-- 게시판/상담지식 목록 카운트-->
+    <select id="selectRebArticleListCnt" parameterType="BbsRebVO" resultType="java.lang.Integer">
+        SELECT
+            COUNT( * )
+        FROM
+            (
+                SELECT
+                    reb.*
+                  FROM
+                    (
+                        SELECT
+                            A.*,
+                            B.REB_GRADE_CODE,
+                            B.REB_KEYWORD,
+                            B.REB_PROGRESS_CODE,
+                            B.REB_TYPE_CODE,
+                            B.REB_UNPRO_DESC,
+                            B.REB_REQCODE,
+                            (
+                                SELECT cdl.CL_CODE FROM TB_CMMNDETAILCODE cde
+                                LEFT JOIN TB_CMMNCODE cd ON cde.CODE_ID = cd.CODE_ID
+                                LEFT JOIN TB_CMMNCLCODE cdl ON cd.CL_CODE = cdl.CL_CODE
+                                WHERE
+                                cde.CODE = B.REB_TYPE_CODE
+                            ) AS REB_TYPE_LARGE_CODE,
+                            (
+                                SELECT cdl.CL_CODE_NM FROM TB_CMMNDETAILCODE cde
+                                LEFT JOIN TB_CMMNCODE cd ON cde.CODE_ID = cd.CODE_ID
+                                LEFT JOIN TB_CMMNCLCODE cdl ON cd.CL_CODE = cdl.CL_CODE
+                                WHERE
+                            cde.CODE = B.REB_TYPE_CODE
+                            ) AS REB_TYPE_LARGE_NM,
+                            (
+                                SELECT cd.CODE_ID FROM TB_CMMNDETAILCODE cde
+                                LEFT JOIN TB_CMMNCODE cd ON cde.CODE_ID = cd.CODE_ID
+                                WHERE
+                            cde.CODE = B.REB_TYPE_CODE
+                            ) AS REB_TYPE_MEDIUM_CODE,
+                            (
+                                SELECT cd.CODE_ID_NM FROM TB_CMMNDETAILCODE cde
+                                LEFT JOIN TB_CMMNCODE cd ON cde.CODE_ID = cd.CODE_ID
+                                WHERE
+                                cde.CODE = B.REB_TYPE_CODE
+                            ) AS REB_TYPE_MEDIUM_NM,
+                            (SELECT CODE_NM FROM TB_CMMNDETAILCODE WHERE CODE = B.REB_TYPE_CODE) AS REB_TYPE_SMALL_NM,
+                            (SELECT CODE_NM FROM TB_CMMNDETAILCODE WHERE B.REB_PROGRESS_CODE = CODE) AS REB_PROGRESS_NM,
+                            C.BBS_INTRCN,
+                            C.BOLD_POSBL_AT,
+                            C.SECRET_POSBL_AT,
+                            C.PERIOD_POSBL_AT,
+                            C.ANSWER_POSBL_AT,
+                            C.REPLY_POSBL_AT,
+                            C.FILE_ATCH_POSBL_AT,
+                            C.FILE_CNT,
+                            C.ATCH_POSBL_FILE_SIZE
+                          FROM
+                            TB_BBS A LEFT JOIN TB_BBSMASTER C ON A.BBS_ID = C.BBS_ID,
+                            TB_BBSREB B
+                         WHERE
+                            A.NTT_ID = B.NTT_ID
+                    ) reb
+                  LEFT JOIN VIEW_USERMASTER usr ON reb.FRST_REGISTER_ID = usr.ESNTL_ID
+                  LEFT JOIN TB_AUTHORGROUPINFO grp ON usr.GROUP_ID = grp.GROUP_ID
+                  LEFT JOIN TB_ORGNZTINFO org ON grp.ORGNZT_ID = org.ORGNZT_ID
+                 WHERE
+                    reb.USE_AT = 'Y'
+                <include refid="searchRebArticle"/>
+            ) AS cnt
+    </select>
+
+    <!-- 게시판/상담지식 상세-->
+    <select id="selectRebArticleDetail" parameterType="BbsRebVO" resultType="BbsRebVO">
+        SELECT
+            reb.*,
+            usr.USER_NM AS frstRegisterNm,
+            (SELECT COUNT(1) FROM TB_BBSHISTORY where NTT_ID = reb.NTT_ID) as HISTORY_CNT
+        FROM
+            (
+                SELECT
+                    A.*,
+                    B.REB_GRADE_CODE,
+                    B.REB_KEYWORD,
+                    B.REB_PROGRESS_CODE,
+                    (
+                        SELECT cdl.CL_CODE_NM FROM TB_CMMNDETAILCODE cde
+                        LEFT JOIN TB_CMMNCODE cd ON cde.CODE_ID = cd.CODE_ID
+                        LEFT JOIN TB_CMMNCLCODE cdl ON cd.CL_CODE = cdl.CL_CODE
+                        WHERE cde.CODE = B.REB_TYPE_CODE
+                    ) AS REB_TYPE_LARGE_NM,
+                    (
+                        SELECT cd.CODE_ID_NM FROM TB_CMMNDETAILCODE cde
+                        LEFT JOIN TB_CMMNCODE cd ON cde.CODE_ID = cd.CODE_ID
+                        WHERE cde.CODE = B.REB_TYPE_CODE
+                    ) AS REB_TYPE_MEDIUM_NM,
+                    (SELECT CODE_NM FROM TB_CMMNDETAILCODE WHERE CODE = B.REB_TYPE_CODE) AS REB_TYPE_SMALL_NM,
+                    B.REB_TYPE_CODE,
+                    B.REB_UNPRO_DESC,
+                    B.REB_REQCODE,
+                    B.REB_REQRESULT,
+                    C.BBS_INTRCN,
+                    C.BOLD_POSBL_AT,
+                    C.SECRET_POSBL_AT,
+                    C.PERIOD_POSBL_AT,
+                    C.ANSWER_POSBL_AT,
+                    C.REPLY_POSBL_AT,
+                    C.FILE_ATCH_POSBL_AT,
+                    C.FILE_CNT,
+                    C.ATCH_POSBL_FILE_SIZE
+                FROM
+                    TB_BBS A LEFT JOIN TB_BBSMASTER C ON A.BBS_ID = C.BBS_ID,
+                    TB_BBSREB B
+                WHERE
+                    A.NTT_ID = B.NTT_ID
+            ) reb
+                LEFT JOIN VIEW_USERMASTER usr ON reb.FRST_REGISTER_ID = usr.ESNTL_ID
+                LEFT JOIN TB_AUTHORGROUPINFO grp ON usr.GROUP_ID = grp.GROUP_ID
+                LEFT JOIN TB_ORGNZTINFO org ON grp.ORGNZT_ID = org.ORGNZT_ID
+        WHERE
+            reb.USE_AT = 'Y'
+            AND reb.NTT_ID = #{nttId}
+    </select>
+
+    <!-- 게시판/상담지식 추가-->
+    <insert id="insertRebArticle" parameterType="BbsRebVO">
+        INSERT INTO  TB_BBSREB (
+            NTT_ID,
+            REB_TYPE_CODE,
+            REB_KEYWORD,
+            REB_GRADE_CODE,
+            REB_PROGRESS_CODE,
+            REB_UNPRO_DESC,
+            REB_REQRESULT
+        ) VALUES (
+            #{nttId},
+            #{rebTypeCode},
+            #{rebKeyword},
+            #{rebGradeCode},
+            #{rebProgressCode},
+            #{rebUnproDesc},
+            #{rebReqresult}
+        )
+    </insert>
+
+    <!-- 게시판/상담지식 수정-->
+    <update id="updateRebArticle" parameterType="BbsRebVO">
+        UPDATE
+            TB_BBSREB
+        SET
+            <if test="rebTypeCode != null and rebTypeCode neq ''">
+                REB_TYPE_CODE = #{rebTypeCode},
+            </if>
+            <if test="rebKeyword != null and rebKeyword neq ''">
+                REB_KEYWORD = #{rebKeyword},
+            </if>
+            <if test="rebGradeCode != null and rebGradeCode neq ''">
+                REB_GRADE_CODE = #{rebGradeCode},
+            </if>
+            <if test="rebUnproDesc != null and rebUnproDesc neq ''">
+                REB_UNPRO_DESC = #{rebUnproDesc},
+            </if>
+            <if test="rebReqcode != null and rebReqcode neq ''">
+                REB_REQCODE = #{rebReqcode},
+            </if>
+            <if test="rebReqresult != null and rebReqresult neq ''">
+                REB_REQRESULT = #{rebReqresult},
+            </if>
+            REB_PROGRESS_CODE = #{rebProgressCode}
+        WHERE
+            NTT_ID = #{nttId}
+    </update>
+
+    <!-- 게시판/상담지식 수정-->
+    <update id="updateRebArticleProgressCode" parameterType="BbsRebVO">
+        UPDATE
+            TB_BBSREB
+        SET
+            REB_PROGRESS_CODE = #{rebProgressCode}
+        WHERE
+            NTT_ID = #{nttId}
+    </update>
+
+    <!-- 게시판/상담지식 삭제-->
+    <delete id="deleteRebArticle">
+        DELETE FROM
+            TB_BBSREB
+        WHERE
+            NTT_ID = #{nttId}
+    </delete>
+
+    <!--상담지식/집계내역 목록-->
+    <select id="selectRebStatList" parameterType="BbsRebVO" resultType="egovMap">
+
+    </select>
+
+
+    <!-- 게시물결재권자 목록-->
+    <select id="selectRebApprovalList" parameterType="BbsRebVO" resultType="egovMap">
+
+        SELECT
+            appr.APPR_ID,
+            appr.NTT_ID,
+            appr.AUTHOR_CODE,
+            appr.ESNTL_ID,
+            usr.USER_NM,
+            usr.GROUP_ID,
+            auth.AUTHOR_NM,
+            sgn.SS_TYPE,
+            sgn.SS_RESULT,
+            sgn.SS_COMMENT,
+            sgn.RECEIVEDATE,
+            DATE_FORMAT(sgn.SIGNDATE, '%Y.%m.%d %H:%i%:%S') AS SIGNDATE,
+            sgn.SS_APPROVAL
+        FROM
+            TB_BBSREBAPPROVAL appr
+            LEFT JOIN view_usermaster usr ON appr.ESNTL_ID = usr.ESNTL_ID
+            LEFT JOIN TB_BBSSIGN sgn ON appr.APPR_ID = sgn.APPR_ID
+            LEFT JOIN tb_authorinfo auth ON appr.AUTHOR_CODE = auth.AUTHOR_CODE
+        WHERE
+        1 = 1
+        <if test="nttId != null and nttId != 0">
+            AND appr.NTT_ID = #{nttId}
+        </if>
+        <if test="authorCode != null and authorCode neq ''">
+            AND appr.AUTHOR_CODE = #{authorCode}
+        </if>
+        <if test="esntlId != null and esntlId neq ''">
+            AND appr.ESNTL_ID = #{esntlId}
+        </if>
+        <if test="ssType != null and ssType neq ''">
+            AND sgn.SS_TYPE = #{ssType}
+        </if>
+        ORDER BY appr.AUTHOR_CODE DESC
+    </select>
+
+    <!-- 게시물결재권자 상세-->
+    <select id="selectRebApprovalDetail" parameterType="BbsRebVO" resultType="BbsRebVO">
+        SELECT
+            APPR_ID,
+            NTT_ID,
+            AUTHOR_CODE,
+            ESNTL_ID
+        FROM
+            TB_BBSREBAPPROVAL
+        WHERE
+            NTT_ID = #{nttId}
+        AND APPR_ID = #{apprId}
+    </select>
+
+    <!-- 게시물결재권자 추가-->
+    <insert id="insertRebApproval" parameterType="BbsRebVO">
+        <selectKey keyProperty="apprId" resultType="java.lang.Integer" order="BEFORE">
+            SELECT IFNULL(MAX(APPR_ID),0)+1 AS APPR_ID  FROM TB_BBSREBAPPROVAL
+        </selectKey>
+
+        INSERT INTO TB_BBSREBAPPROVAL(
+            APPR_ID,
+            NTT_ID,
+            AUTHOR_CODE,
+            ESNTL_ID
+        ) VALUES (
+            #{apprId},
+            #{nttId},
+            #{authorCode},
+            #{esntlId}
+        )
+    </insert>
+
+    <!-- 게시물결재권자 수정-->
+    <update id="updateRebApproval" parameterType="BbsRebVO">
+        UPDATE TB_BBSREBAPPROVAL
+        SET
+            AUTHOR_CODE = #{authorCode},
+            ESNTL_ID = #{esntlId}
+        WHERE
+            APPR_ID = #{apprId}
+    </update>
+
+    <!-- 게시물결재권자 삭제-->
+    <delete id="deleteRebApproval" parameterType="BbsRebVO">
+        DELETE FROM
+            TB_BBSREBAPPROVAL
+        WHERE
+            APPR_ID = #{apprId}
+    </delete>
+
+    <!-- 게시물결재권자 삭제-->
+    <delete id="deleteRebApprovalByNttIdAndAuth" parameterType="BbsRebVO">
+        DELETE FROM
+            TB_BBSREBAPPROVAL
+        WHERE
+            NTT_ID = #{nttId}
+        <if test="authorCode != null and authorCode neq ''">
+        AND
+            AUTHOR_CODE = #{authorCode}
+        </if>
+    </delete>
+
+    <!-- 게시물결재권자 진행상황코드 업데이트-->
+    <update id="updateRebProg" parameterType="BbsRebVO">
+        UPDATE TB_BBSREB
+        SET
+            REB_PROGRESS_CODE = #{rebProgressCode}
+        WHERE
+            NTT_ID = #{nttId}
+    </update>
+
+    <!-- 결재 상세 -->
+    <select id="selectRebSignDetail" parameterType="BbsSignVO" resultType="BbsSignVO">
+        SELECT
+            SS_TYPE,
+            SS_RESULT,
+            SS_COMMENT,
+            RECEIVEDATE,
+            SIGNDATE,
+            SS_APPROVAL,
+            APPR_ID
+        FROM
+            TB_BBSSIGN
+        WHERE
+            APPR_ID = #{apprId}
+        AND
+            SS_APPROVAL = #{ssApproval}
+    </select>
+
+    <!-- 결재 목록-->
+    <select id="selectRebSignList" parameterType="BbsSignVO" resultType="egovMap">
+        SELECT
+            sgn.SS_TYPE,
+            sgn.SS_RESULT,
+            sgn.SS_COMMENT,
+            sgn.RECEIVEDATE,
+            DATE_FORMAT(sgn.SIGNDATE, '%Y.%m.%d %H:%i%:%S') AS SIGNDATE,
+            sgn.SS_APPROVAL,
+            appr.APPR_ID,
+            appr.NTT_ID,
+            appr.ESNTL_ID,
+            appr.AUTHOR_CODE
+        FROM
+            TB_BBSSIGN sgn
+            LEFT JOIN TB_BBSREBAPPROVAL appr ON sgn.APPR_ID = appr.APPR_ID
+        WHERE
+            1 = 1
+        <if test="nttId != null and nttId != 0">
+            AND appr.NTT_ID = #{nttId}
+        </if>
+        <if test="ssType != null and ssType neq ''">
+            AND sgn.SS_TYPE = #{ssType}
+        </if>
+    </select>
+
+    <!-- 결재 추가-->
+    <insert id="insertRebSign" parameterType="BbsSignVO">
+
+        INSERT INTO TB_BBSSIGN ( SS_TYPE, SS_RESULT, SS_COMMENT, RECEIVEDATE, SIGNDATE, SS_APPROVAL, APPR_ID )
+        VALUES
+            (
+                #{ssType},
+                #{ssResult},
+                #{ssComment},
+                #{receivedate},
+                now(),
+                #{ssApproval},
+                #{apprId}
+            )
+
+    </insert>
+
+    <!-- 결재 수정-->
+    <update id="updateRebSign" parameterType="BbsSignVO">
+        UPDATE TB_BBSSIGN
+        SET
+            SS_TYPE = #{ssType},
+            SS_RESULT = #{ssResult},
+            SS_COMMENT = #{ssComment}
+        WHERE
+            APPR_ID = #{apprId}
+    </update>
+
+    <!-- 결재 삭제-->
+    <delete id="deleteRebSign" parameterType="BbsSignVO">
+        DELETE FROM TB_BBSSIGN
+        WHERE
+            APPR_ID = #{apprId}
+    </delete>
+
+    <!-- 그룹별지식요청 조회-->
+    <select id="selectQnaGroupList" parameterType="BbsRebVO" resultType="egovMap">
+        SELECT  bbs.BBS_ID
+             ,  bbs.NTT_ID
+             ,  bbs.NTT_SJ
+             ,  bbs.RDCNT
+             ,  usr.ESNTL_ID
+             ,  usr.USER_NM
+             ,  grp.GROUP_ID
+             ,  grp.GROUP_NM
+          FROM  tb_bbs bbs
+          LEFT  JOIN  VIEW_USERMASTER usr ON  bbs.NTCR_ID = usr.ESNTL_ID
+          LEFT  JOIN TB_AUTHORGROUPINFO grp ON usr.GROUP_ID = grp.GROUP_ID
+         WHERE  1=1
+           AND  bbs.BBS_ID = #{bbsId}
+        <if test="searchGroupId != null and searchGroupId neq ''">
+           AND  grp.GROUP_ID = #{searchGroupId}
+        </if>
+         ORDER  BY bbs.RDCNT DESC
+    </select>
+
+    <!-- 게시판변경내역 목록-->
+    <select id="selectArticleHistoryList" parameterType="BbsRebVO" resultType="egovMap">
+        SELECT
+            bht.NTT_HSTR_ID,
+            bht.NTT_ID,
+            bht.BBS_ID,
+            bht.NTT_SJ,
+            bht.NTT_CN,
+            bht.SORT_ORDR,
+            bht.NTCR_ID,
+            bht.NTCR_NM,
+            bht.ATCH_FILE_ID,
+            bht.THUMB_ATCH_FILE_ID,
+            bht.FRST_REGIST_PNTTM,
+            bht.FRST_REGISTER_ID,
+            bht.NTT_CN_LOOKUP,
+            bht.REB_TYPE_CODE,
+            bht.REB_KEYWORD,
+            bht.REB_GRADE_CODE,
+            bht.REB_PROGRESS_CODE,
+            bht.REB_UNPRO_DESC,
+            (
+                SELECT cdl.CL_CODE FROM TB_CMMNDETAILCODE cde
+                LEFT JOIN TB_CMMNCODE cd ON cde.CODE_ID = cd.CODE_ID
+                LEFT JOIN TB_CMMNCLCODE cdl ON cd.CL_CODE = cdl.CL_CODE
+                WHERE
+                cde.CODE = bht.REB_TYPE_CODE
+            ) AS REB_TYPE_LARGE_CODE,
+            (
+                SELECT cdl.CL_CODE_NM FROM TB_CMMNDETAILCODE cde
+                LEFT JOIN TB_CMMNCODE cd ON cde.CODE_ID = cd.CODE_ID
+                LEFT JOIN TB_CMMNCLCODE cdl ON cd.CL_CODE = cdl.CL_CODE
+                WHERE
+                cde.CODE = bht.REB_TYPE_CODE
+            ) AS REB_TYPE_LARGE_NM,
+            (
+                SELECT cd.CODE_ID FROM TB_CMMNDETAILCODE cde
+                LEFT JOIN TB_CMMNCODE cd ON cde.CODE_ID = cd.CODE_ID
+                WHERE
+                cde.CODE = bht.REB_TYPE_CODE
+            ) AS REB_TYPE_MEDIUM_CODE,
+            (
+                SELECT cd.CODE_ID_NM FROM TB_CMMNDETAILCODE cde
+                LEFT JOIN TB_CMMNCODE cd ON cde.CODE_ID = cd.CODE_ID
+                WHERE
+                cde.CODE = bht.REB_TYPE_CODE
+            ) AS REB_TYPE_MEDIUM_NM,
+            (SELECT CODE_NM FROM TB_CMMNDETAILCODE WHERE CODE = bht.REB_TYPE_CODE) AS REB_TYPE_SMALL_NM,
+            (SELECT CODE_NM FROM TB_CMMNDETAILCODE WHERE bht.REB_PROGRESS_CODE = CODE) AS REB_PROGRESS_NM
+        FROM
+            TB_BBSHISTORY bht
+        WHERE
+            NTT_ID = #{nttId}
+        <include refid="searchRebHistoryArticle"/>
+        LIMIT  #{recordCountPerPage} OFFSET #{firstIndex}
+    </select>
+
+    <select id="selectArticleHistoryListCnt" parameterType="BbsRebVO" resultType="java.lang.Integer">
+        SELECT COUNT(1) FROM (
+             SELECT
+                 NTT_HSTR_ID,
+                 NTT_ID,
+                 BBS_ID,
+                 NTT_SJ,
+                 NTT_CN,
+                 SORT_ORDR,
+                 NTCR_ID,
+                 NTCR_NM,
+                 ATCH_FILE_ID,
+                 THUMB_ATCH_FILE_ID,
+                 FRST_REGIST_PNTTM,
+                 FRST_REGISTER_ID,
+                 NTT_CN_LOOKUP,
+                 REB_TYPE_CODE,
+                 REB_KEYWORD,
+                 REB_GRADE_CODE,
+                 REB_PROGRESS_CODE,
+                 REB_UNPRO_DESC
+             FROM
+                 TB_BBSHISTORY
+            WHERE
+                NTT_ID = #{nttId}
+            <include refid="searchRebHistoryArticle"/>
+        ) as cnt
+    </select>
+
+    <!-- 게시판변경내역 상세-->
+    <select id="selectBbsHistoryDetail" parameterType="BbsRebVO" resultType="BbsRebVO">
+        SELECT
+            NTT_HSTR_ID,
+            NTT_ID,
+            BBS_ID,
+            NTT_SJ,
+            NTT_CN,
+            SORT_ORDR,
+            NTCR_ID,
+            NTCR_NM,
+            ATCH_FILE_ID,
+            THUMB_ATCH_FILE_ID,
+            FRST_REGIST_PNTTM,
+            FRST_REGISTER_ID,
+            NTT_CN_LOOKUP,
+            REB_TYPE_CODE,
+            REB_KEYWORD,
+            REB_GRADE_CODE,
+            REB_PROGRESS_CODE,
+            REB_UNPRO_DESC
+        FROM
+            TB_BBSHISTORY
+        WHERE
+            NTT_ID = #{nttId}
+            AND NTT_HSTR_ID = #{nttHstrId}
+        ORDER BY NTT_HSTR_ID DESC
+        LIMIT 1
+    </select>
+
+    <!-- 게시판변경내역 추가-->
+    <insert id="insertBbsHistory" parameterType="BbsRebVO">
+        <selectKey keyProperty="nttHstrId" resultType="java.lang.Integer" order="BEFORE">
+            SELECT IFNULL(MAX(NTT_HSTR_ID),0)+1 AS NTT_HSTR_ID  FROM TB_BBSHISTORY
+        </selectKey>
+
+        INSERT INTO TB_BBSHISTORY
+        (
+            NTT_HSTR_ID,
+            NTT_ID,
+            BBS_ID,
+            NTT_SJ,
+            NTT_CN,
+            SORT_ORDR,
+            NTCR_ID,
+            NTCR_NM,
+            ATCH_FILE_ID,
+            THUMB_ATCH_FILE_ID,
+            FRST_REGIST_PNTTM,
+            FRST_REGISTER_ID,
+            NTT_CN_LOOKUP,
+            REB_TYPE_CODE,
+            REB_KEYWORD,
+            REB_GRADE_CODE,
+            REB_PROGRESS_CODE,
+            REB_UNPRO_DESC
+        ) VALUES (
+            #{nttHstrId},
+            #{nttId},
+            #{bbsId},
+            #{nttSj},
+            #{nttCn},
+            #{sortOrdr},
+            #{ntcrId},
+            #{ntcrNm},
+            #{atchFileId},
+            #{thumbAtchFileId},
+            sysdate(),
+            #{frstRegisterId},
+            #{nttCnLookup},
+            #{rebTypeCode},
+            #{rebKeyword},
+            #{rebGradeCode},
+            #{rebProgressCode},
+            #{rebUnproDesc}
+        )
+
+    </insert>
+
+    <!-- 게시판변경내역 수정-->
+    <update id="updateBbsHistory" parameterType="BbsRebVO">
+
+    </update>
+
+    <!-- 게시판변경내역 삭제-->
+    <delete id="deleteBbsHistory" parameterType="BbsRebVO">
+        DELETE FROM
+            TB_BBSHISTORY
+        WHERE
+            NTT_HSTR_ID = #{nttHstrId}
+    </delete>
+
+    <!-- 차트데이터(청약) 조회-->
+    <select id="selectChartData" parameterType="BbsRebVO" resultType="egovMap">
+        SELECT  CODE_ID,
+                CODE_ID_NM,
+                IFNULL(REB_PER, 0) as REB_PER
+          FROM  TB_CMMNCODE cod
+          LEFT  JOIN TB_CMMNCLCODE clc
+            ON  clc.CL_CODE = cod.CL_CODE
+          LEFT JOIN (
+                        SELECT  (
+                                    SELECT cdl.CL_CODE FROM TB_CMMNDETAILCODE cde
+                                    LEFT JOIN TB_CMMNCODE cd ON cde.CODE_ID = cd.CODE_ID
+                                    LEFT JOIN TB_CMMNCLCODE cdl ON cd.CL_CODE = cdl.CL_CODE
+                                    WHERE cde.CODE = REB_TYPE_CODE
+                                ) AS REB_TYPE_LARGE_CODE,
+                                (
+                                    SELECT cd.CODE_ID FROM TB_CMMNDETAILCODE cde
+                                    LEFT JOIN TB_CMMNCODE cd ON cde.CODE_ID = cd.CODE_ID
+                                    WHERE cde.CODE = REB_TYPE_CODE
+                                ) AS REB_TYPE_MEDIUM_CODE,
+                                ROUND(COUNT(*) / (SELECT COUNT(*) FROM TB_BBSREB b  WHERE b.REB_TYPE_CODE LIKE 'A%') * 100) as REB_PER
+                          FROM  TB_BBSREB
+                         GROUP  BY REB_TYPE_LARGE_CODE, REB_TYPE_MEDIUM_CODE
+                    ) tbl
+            ON  tbl.REB_TYPE_MEDIUM_CODE = cod.CODE_ID
+         WHERE  cod.CL_CODE = 'A001'
+         ORDER  BY CODE_ID
+    </select>
+
+    <!-- 차트데이터(대표전화) 조회-->
+    <select id="selectChartData2" parameterType="BbsRebVO" resultType="egovMap">
+        SELECT  CODE_ID,
+                CODE_ID_NM,
+                IFNULL(REB_PER, 0) as REB_PER
+          FROM  TB_CMMNCODE cod
+          LEFT  JOIN TB_CMMNCLCODE clc
+            ON  clc.CL_CODE = cod.CL_CODE
+          LEFT JOIN (
+                        SELECT  (
+                                    SELECT cdl.CL_CODE FROM TB_CMMNDETAILCODE cde
+                                    LEFT JOIN TB_CMMNCODE cd ON cde.CODE_ID = cd.CODE_ID
+                                    LEFT JOIN TB_CMMNCLCODE cdl ON cd.CL_CODE = cdl.CL_CODE
+                                    WHERE cde.CODE = REB_TYPE_CODE
+                                ) AS REB_TYPE_LARGE_CODE,
+                                (
+                                    SELECT cd.CODE_ID FROM TB_CMMNDETAILCODE cde
+                                    LEFT JOIN TB_CMMNCODE cd ON cde.CODE_ID = cd.CODE_ID
+                                    WHERE cde.CODE = REB_TYPE_CODE
+                                ) AS REB_TYPE_MEDIUM_CODE,
+                                ROUND(COUNT(*) / (SELECT COUNT(*) FROM TB_BBSREB b  WHERE b.REB_TYPE_CODE LIKE 'B%') * 100) as REB_PER
+                          FROM  TB_BBSREB
+                         GROUP  BY REB_TYPE_LARGE_CODE, REB_TYPE_MEDIUM_CODE
+                    ) tbl
+            ON  tbl.REB_TYPE_MEDIUM_CODE = cod.CODE_ID
+         WHERE  cod.CL_CODE = 'B001'
+         ORDER  BY CODE_ID
+    </select>
+
+    <!-- 게시판/상담지식 목록-->
+    <select id="selectRebExcelList" parameterType="BbsRebVO" resultType="egovMap">
+        SELECT
+            reb.*
+          FROM
+            (
+                SELECT
+                    A.NTT_ID,
+                    A.BBS_ID,
+                    A.NTT_NO,
+                    A.NTT_SJ,
+                    A.FRST_REGISTER_ID,
+                    DATE_FORMAT(A.FRST_REGIST_PNTTM,'%Y-%m-%d') AS FRST_REGIST_PNTTM,
+                    A.USE_AT,
+                    B.REB_GRADE_CODE,
+                    B.REB_KEYWORD,
+                    B.REB_PROGRESS_CODE,
+                    B.REB_TYPE_CODE,
+                    B.REB_UNPRO_DESC,
+                    B.REB_REQCODE,
+                    (
+                        SELECT cdl.CL_CODE_NM FROM TB_CMMNDETAILCODE cde
+                        LEFT JOIN TB_CMMNCODE cd ON cde.CODE_ID = cd.CODE_ID
+                        LEFT JOIN TB_CMMNCLCODE cdl ON cd.CL_CODE = cdl.CL_CODE
+                        WHERE
+                        cde.CODE = B.REB_TYPE_CODE
+                    ) AS REB_TYPE_LARGE_NM,
+                    (
+                    SELECT cd.CODE_ID_NM FROM TB_CMMNDETAILCODE cde
+                    LEFT JOIN TB_CMMNCODE cd ON cde.CODE_ID = cd.CODE_ID
+                    WHERE
+                    cde.CODE = B.REB_TYPE_CODE
+                    ) AS REB_TYPE_MEDIUM_NM,
+                    (SELECT CODE_NM FROM TB_CMMNDETAILCODE WHERE CODE = B.REB_TYPE_CODE) AS REB_TYPE_SMALL_NM,
+                    (SELECT CODE_NM FROM TB_CMMNDETAILCODE WHERE B.REB_PROGRESS_CODE = CODE) AS REB_PROGRESS_NM,
+                    C.BBS_INTRCN,
+                    C.BOLD_POSBL_AT,
+                    C.SECRET_POSBL_AT,
+                    C.PERIOD_POSBL_AT,
+                    C.ANSWER_POSBL_AT,
+                    C.REPLY_POSBL_AT,
+                    C.FILE_ATCH_POSBL_AT,
+                    C.FILE_CNT,
+                    C.ATCH_POSBL_FILE_SIZE
+                  FROM
+                    TB_BBS A LEFT JOIN TB_BBSMASTER C ON A.BBS_ID = C.BBS_ID,
+                    TB_BBSREB B
+                 WHERE
+                    A.NTT_ID = B.NTT_ID
+                    ) reb
+          LEFT JOIN VIEW_USERMASTER usr ON reb.FRST_REGISTER_ID = usr.ESNTL_ID
+          LEFT JOIN TB_AUTHORGROUPINFO grp ON usr.GROUP_ID = grp.GROUP_ID
+          LEFT JOIN TB_ORGNZTINFO org ON grp.ORGNZT_ID = org.ORGNZT_ID
+         WHERE
+            reb.USE_AT = 'Y'
+            <include refid="searchRebArticle"/>
+         ORDER  BY reb.NTT_NO DESC
+    </select>
+</mapper>

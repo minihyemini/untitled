@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN" "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+
+	<!--Mybatis 설정 -->
+	<settings>
+		<!-- 전통적인 데이터베이스 컬럼명 형태인 A_COLUMN을 CamelCase형태의 자바 프로퍼티명 형태인 aColumn으로 자동으로 매핑하도록 함 -->
+		<setting name="mapUnderscoreToCamelCase" value="true"></setting>
+		<!--  파라미터에 Null 값이 있을 경우 에러 처리 -->
+		<setting name="jdbcTypeForNull" value="VARCHAR"></setting>
+	</settings>
+	
+	<!-- Type Aliases 설정-->
+	<typeAliases>
+		<typeAlias alias="egovMap" 					type="egovframework.rte.psl.dataaccess.util.EgovMap" />
+		<typeAlias alias="MobileCipherTypeHandler"	type="jisungsoft.com.cmm.util.MobileCipherTypeHandler" />
+		<typeAlias alias="EmailCipherTypeHandler"	type="jisungsoft.com.cmm.util.EmailCipherTypeHandler" />
+
+		<!--메뉴-->
+<!--		<typeAlias alias="MenuManageVO"				type="jisungsoft.com.mes.sym.menu.mpm.service.MenuManageVO" />-->
+<!--		<typeAlias alias="ProgramManageVO"			type="jisungsoft.com.sym.prm.service.ProgramManageVO" />-->
+		<!--메뉴 생성관리-->
+		<typeAlias alias="MenuCreatVO"				type="jisungsoft.com.persistence.model.sym.menu.MenuCreatVO" />
+		<!--권한관리-->
+		<typeAlias alias="AuthorManageVO"			type="jisungsoft.com.persistence.model.sec.AuthorInfoVO" />
+		<typeAlias alias="AuthorManage"				type="jisungsoft.com.persistence.dto.sec.AuthorInfo" />
+		<!--권한별 롤관리-->
+		<typeAlias alias="AuthorRoleManageVO"		type="jisungsoft.com.sec.ram.service.AuthorRoleManageVO" />
+		<typeAlias alias="AuthorRoleManage"			type="jisungsoft.com.sec.ram.service.AuthorRoleManage" />
+		<!--롤관리-->
+		<typeAlias alias="RoleManageVO"				type="jisungsoft.com.sec.rmt.service.RoleManageVO" />
+		<typeAlias alias="RoleManage"				type="jisungsoft.com.sec.rmt.service.RoleManage" />
+		<!--회원-->
+		<typeAlias alias="UserDefaultVO"   		 	type="jisungsoft.com.uss.umt.model.UserDefaultVO" />
+		<typeAlias alias="UserManageVO"   		 	type="jisungsoft.com.uss.umt.model.UserManageVO" />
+		<typeAlias alias="MberManageVO"     		type="jisungsoft.com.uss.umt.model.MberManageVO" />
+		<!--부서관리-->
+		<typeAlias alias="DeptManageVO"     		type="jisungsoft.com.uss.umt.model.DeptManageVO" />
+		<!--그룹관리-->
+		<typeAlias alias="GroupManageVO"     		type="jisungsoft.com.sec.gmt.service.GroupManageVO" />
+		<typeAlias alias="GroupUserManageVO"     	type="jisungsoft.com.sec.gmt.service.GroupUserManageVO" />
+		<!--공통코드-->
+<!--		<typeAlias alias="CmmnClCodeVO"     		type="jisungsoft.com.persistence.model.code.CmmnClCodeVO" />-->
+<!--		<typeAlias alias="CmmnCodeVO"       		type="jisungsoft.com.persistence.model.code.CmmnCodeVO" />-->
+<!--		<typeAlias alias="CmmnDetailCodeVO" 		type="jisungsoft.com.persistence.model.code.CmmnDetailCodeVO" />-->
+		<!--게시판 관리-->
+		<typeAlias alias="BbsMasterVO"				type="jisungsoft.com.cop.bbs.service.BbsMasterVO" />
+		<typeAlias alias="BbsMasterAuthVO"			type="jisungsoft.com.cop.bbs.service.BbsMasterAuthVO" />
+		<typeAlias alias="ArticleDataVO"			type="jisungsoft.com.cop.bbs.service.ArticleDataVO" />
+		<typeAlias alias="CommentVO"	    		type="jisungsoft.com.cop.bbs.service.CommentVO" />
+		<!--세미나 관리-->
+		<typeAlias alias="ArticleSeminarVO"			type="jisungsoft.com.cop.bbs.service.ArticleSeminarVO" />
+		<!--커뮤니티 관리-->
+		<typeAlias alias="CommunityVO"	    		type="jisungsoft.com.cop.cmy.service.CommunityVO" />
+		<typeAlias alias="CommunityUserVO"   		type="jisungsoft.com.cop.cmy.service.CommunityUserVO" />
+		<!-- 사이트 관리 -->
+		<typeAlias alias="StplatVO" 		  		type="jisungsoft.com.uss.sam.stp.service.StplatVO" />
+		<typeAlias alias="PopupVO"	 		  		type="jisungsoft.com.uss.ion.pwm.service.PopupVO" />
+		<!-- 쪽지함관리 -->
+		<typeAlias alias="NoteVO"	 		  		type="jisungsoft.com.uss.ion.ntm.service.NoteVO" />
+		<typeAlias alias="NoteRecptnVO"		  		type="jisungsoft.com.uss.ion.ntr.service.NoteRecptnVO" />
+		<typeAlias alias="NoteTrnsmitVO"	  		type="jisungsoft.com.uss.ion.nts.service.NoteTrnsmitVO" />
+		<!-- 메일관리 -->
+		<typeAlias alias="SndngMailTemplateVO"		type="jisungsoft.com.cop.ems.service.SndngMailTemplateVO" />
+		<typeAlias alias="SndngMailVO"				type="jisungsoft.com.cop.ems.service.SndngMailVO" />
+		<typeAlias alias="AtchmnFileVO"				type="jisungsoft.com.cop.ems.service.AtchmnFileVO" />
+		<typeAlias alias="RegMberAuthVO"			type="jisungsoft.com.cop.ems.service.RegMberAuthVO" />
+		<typeAlias alias="UserEmailConfgVO"			type="jisungsoft.com.cop.ems.service.UserEmailConfgVO" />
+		<!-- 문자메세지 -->
+		<typeAlias alias="SmsVO"					type="jisungsoft.com.cop.sms.service.SmsVO" />
+		<!-- 이력관리 -->
+		<typeAlias alias="LoginLogVO"				type="jisungsoft.com.sym.log.clg.service.LoginLogVO" />
+		<!-- 상담지식-->
+		<typeAlias alias="BbsRebVO"					type="jisungsoft.com.cop.bbs.service.BbsRebVO" />
+		<!-- 게시판열람자-->
+		<typeAlias alias="BbsViewerLogVO"			type="jisungsoft.com.cop.bbs.service.BbsViewerLogVO" />
+		<!-- 게시판열람권한-->
+		<typeAlias alias="BbsViewerAuthVO"			type="jisungsoft.com.cop.bbs.service.BbsViewerAuthVO" />
+		<!-- 결재 -->
+		<typeAlias alias="BbsSignVO"				type="jisungsoft.com.cop.bbs.service.BbsSignVO" />
+
+
+		<!--Mapper-->
+		<!--공통-->
+		<typeAlias alias="FileVO"					type="jisungsoft.com.cmm.FileVO" />
+		<typeAlias alias="CmmDetailCode"			type="jisungsoft.com.cmm.service.CmmDetailCode" />
+		<typeAlias alias="DefaultCodeVO"			type="jisungsoft.com.cmm.DefaultCodeVO" />
+		<typeAlias alias="CmmDetailUser"			type="jisungsoft.com.cmm.service.CmmDetailUser" />
+		<typeAlias alias="CmmGroup"					type="jisungsoft.com.cmm.service.CmmGroup" />
+		<!--코드-->
+		<typeAlias alias="CmmnClCode"				type="jisungsoft.com.persistence.dto.sym.code.CmmnClCode" />
+		<typeAlias alias="CmmnCode"					type="jisungsoft.com.persistence.dto.sym.code.CmmnCode" />
+		<typeAlias alias="CmmnDetailCode"			type="jisungsoft.com.persistence.dto.sym.code.CmmnDetailCode" />
+		<!--그룹권한관리-->
+		<typeAlias alias="AuthorGroup" 				type="jisungsoft.com.persistence.dto.sec.AuthorGroup" />
+		<!--로그인정책관리-->
+		<typeAlias alias="LoginPolicyVO" 			type="jisungsoft.com.uat.uap.service.LoginPolicyVO" />
+		<!--로그인VO-->
+		<typeAlias alias="LoginVO"					type="jisungsoft.com.persistence.model.LoginVO" />
+		<!-- 일반회원 -->
+		<typeAlias alias="GeneralMember"			type="jisungsoft.com.persistence.dto.member.GeneralMember" />
+		<!-- 기업회원 -->
+		<typeAlias alias="EmployeeMember"			type="jisungsoft.com.persistence.dto.member.EmployeeMember" />
+		<!-- 회원 -->
+		<typeAlias alias="EnterpriseMember"			type="jisungsoft.com.persistence.dto.member.EnterpriseMember" />
+		<!-- 부서 -->
+		<typeAlias alias="Dept"						type="jisungsoft.com.persistence.dto.member.Dept" />
+		<typeAlias alias="Group"					type="jisungsoft.com.persistence.dto.sec.Group" />
+		<!-- 메뉴-->
+		<typeAlias alias="Menu"						type="jisungsoft.com.persistence.dto.sym.menu.Menu" />
+		<!-- 프로그램 -->
+		<typeAlias alias="MenuProgram"				type="jisungsoft.com.persistence.dto.sym.menu.MenuProgram" />
+		<!-- 메뉴권한 -->
+		<typeAlias alias="MenuCreat"				type="jisungsoft.com.persistence.dto.sym.menu.MenuCreat" />
+
+		<!-- MES -->
+		<!-- 설비-->
+		<typeAlias alias="Pdfcilts"					type="jisungsoft.com.persistence.dto.mes.Pdfcilts" />
+		<typeAlias alias="FciltsPdNum"				type="jisungsoft.com.persistence.dto.mes.FciltsPdNum" />
+		<!-- 거래처 -->
+		<typeAlias alias="Client"					type="jisungsoft.com.persistence.dto.mes.Client" />
+		<!-- 주거래품번 -->
+		<typeAlias alias="PdnumClient"				type="jisungsoft.com.persistence.dto.mes.PdnumClient" />
+		<!-- 품번 -->
+		<typeAlias alias="Pdnum"					type="jisungsoft.com.persistence.dto.mes.Pdnum" />
+		<!--품번별 라우팅-->
+		<typeAlias alias="Pdnumbyroutg"				type="jisungsoft.com.persistence.dto.mes.Pdnumbyroutg" />
+		<!-- 주문 -->
+		<typeAlias alias="Order"					type="jisungsoft.com.persistence.dto.mes.Order" />
+
+
+	</typeAliases>
+
+	<typeHandlers>
+		<typeHandler handler="jisungsoft.com.cmm.util.MobileCipherTypeHandler"/>
+		<typeHandler handler="jisungsoft.com.cmm.util.EmailCipherTypeHandler"/>
+	</typeHandlers>
+</configuration>

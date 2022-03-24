@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+						http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.0.xsd
+						http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.0.xsd">
+
+	<bean id="transactionManager" class="org.springframework.orm.jpa.JpaTransactionManager">
+		<property name="entityManagerFactory" ref="entityManagerFactory" />
+	</bean>
+
+	<!-- transaction 설정 -->
+	<!-- TransactionManager 를 이용하여 JPA와 Mybatis 트랜잭션을 하나로 묶으려면, JpaTransactionManager를 사용하면 가능하다. -->
+	<bean id="txManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="egov.dataSource" />
+		<constructor-arg ref="egov.dataSource" />
+	</bean>
+
+	<!-- @Transactional 스캔 -->
+	<tx:annotation-driven transaction-manager="transactionManager"/>
+
+	<tx:advice id="txAdvice" transaction-manager="transactionManager">
+		<tx:attributes>
+			<tx:method name="*" propagation="REQUIRED" rollback-for="Exception" />
+		</tx:attributes>
+	</tx:advice>
+<!--
+	<bean id="txManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="egov.dataSource"/>
+	</bean>
+	-->
+	  <!--
+	<tx:advice id="txAdvice" transaction-manager="txManager">
+	   <tx:attributes>	 
+	       <tx:method name="*" propagation="REQUIRED" rollback-for="Exception"/>
+	   </tx:attributes>
+	</tx:advice>
+    -->
+	<aop:config>
+		<aop:pointcut id="requiredTx" expression="execution(* jisungsoft.com..*Impl.*(..))"/>
+		<aop:advisor advice-ref="txAdvice" pointcut-ref="requiredTx" />
+	</aop:config>
+
+	<!-- JPA 예외를 스프링 예외로 변환 -->
+	<bean class="org.springframework.dao.annotation.PersistenceExceptionTranslationPostProcessor" />
+</beans>

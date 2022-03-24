@@ -1,0 +1,295 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="CommunityMasterDAO">
+
+	<sql id="searchCommunity">
+		<if test="@egovframework.com.cmm.util.EgovMybaitsUtil@isNotEmpty(searchKeyword)">
+			<if test="searchCondition eq 0">
+				AND  (CMMNTY_NM LIKE CONCAT ('%', #{searchKeyword},'%') OR
+					  CMMNTY_SUB_NM LIKE CONCAT ('%', #{searchKeyword},'%') OR
+					  usr.USER_NM LIKE CONCAT ('%', #{searchKeyword},'%'))
+			</if>
+			<if test="searchCondition eq 1">
+				AND  CMMNTY_NM LIKE CONCAT ('%', #{searchKeyword},'%')
+			</if>
+			<if test="searchCondition eq 2">
+				AND  CMMNTY_SUB_NM LIKE CONCAT ('%', #{searchKeyword},'%')
+			</if>
+			<if test="searchCondition eq 3">
+				AND  usr.USER_NM LIKE CONCAT ('%', #{searchKeyword},'%')
+			</if>
+		</if>
+		<if test="bbsId != null and bbsId neq ''">
+			AND BBS_ID = #{bbsId}
+		</if>
+	</sql>
+
+	<select id="selectCommunityMasterList" parameterType="CommunityVO" resultType="egovMap">
+		SELECT
+		        cmm.CMMNTY_ID
+		     ,  cmm.BBS_ID
+		     ,  cmm.CMMNTY_NM
+		     ,  cmm.CMMNTY_SUB_NM
+		     ,  cmm.CMMNTY_CN
+      		 ,  cmm.USE_AT
+			 ,  cmm.ATCH_FILE_ID
+			 ,  cmm.THUMB_ATCH_FILE_ID
+		     ,  (SELECT FILE_SN FROM TB_FILEDETAIL WHERE ATCH_FILE_ID = cmm.THUMB_ATCH_FILE_ID LIMIT 1) as THUMB_FILE_SN
+			 ,  DATE_FORMAT(cmm.FRST_REGIST_PNTTM, '%Y-%m-%d') as FRST_REGIST_PNTTM
+	 	 	 ,  usr.USER_NM as FRST_REGISTER_NM
+			 ,  cmm.RDCNT
+	      FROM  TB_CMMNTY cmm
+		  LEFT  JOIN ( SELECT  ESNTL_ID, USER_ID, USER_NM
+		                 FROM  VIEW_USERMASTER ) usr
+		    ON  cmm.FRST_REGISTER_ID = usr.ESNTL_ID
+		 WHERE  1=1
+		<include refid="searchCommunity"/>
+	   ORDER  BY CMMNTY_NM, CMMNTY_SUB_NM
+	   LIMIT  #{recordCountPerPage} OFFSET #{firstIndex}
+	</select>
+
+	<select id="selectCommunityMasterListCnt" parameterType="CommunityVO" resultType="java.lang.Integer">
+	  SELECT  COUNT(CMMNTY_ID)
+		FROM  TB_CMMNTY cmm
+		LEFT  JOIN ( SELECT  ESNTL_ID, USER_ID, USER_NM
+		               FROM  VIEW_USERMASTER ) usr
+		  ON  cmm.FRST_REGISTER_ID = usr.ESNTL_ID
+       WHERE  1=1
+		<include refid="searchCommunity"/>
+	</select>
+
+	<select id="selectCommunityUserList" parameterType="CommunityUserVO" resultType="egovMap">
+		SELECT  cmu.EMPLYR_ID
+			 ,  MNGR_AT
+			 ,  MBER_STTUS
+		     ,  cod.CODE_NM MBER_STTUS_NM
+			 ,  DATE_FORMAT(SBSCRB_DE, '%Y-%m-%d') as SBSCRB_DE
+			 ,  DATE_FORMAT(SECSN_DE, '%Y-%m-%d') as SECSN_DE
+			 ,  cmu.USE_AT
+			 ,  DATE_FORMAT(cmu.FRST_REGIST_PNTTM, '%Y-%m-%d') as FRST_REGIST_PNTTM
+			 ,  usr.USER_NM as FRST_REGISTER_NM
+		     ,  (SELECT COUNT(1) FROM TB_COMMENT a WHERE a.FRST_REGISTER_ID = cmu.FRST_REGISTER_ID) as REPLY_CNT
+		     ,  (SELECT COUNT(1) FROM TB_BBS a WHERE a.FRST_REGISTER_ID = cmu.FRST_REGISTER_ID) as WRITE_CNT
+		  FROM  TB_CMMNTYUSER cmu
+		 INNER  JOIN TB_CMMNTY cmm
+		    ON  cmu.CMMNTY_ID = cmm.CMMNTY_ID
+		  LEFT  JOIN ( SELECT  ESNTL_ID, USER_ID, USER_NM
+		                 FROM  VIEW_USERMASTER ) usr
+		    ON  cmu.FRST_REGISTER_ID = usr.ESNTL_ID
+		  LEFT  JOIN ( SELECT  CODE_ID, CODE, CODE_NM
+			   		     FROM  TB_CMMNDETAILCODE
+					    WHERE  CODE_ID = 'CMU001'
+  						  AND  USE_AT='Y' ) cod
+		    ON  cmu.MBER_STTUS = cod.CODE
+         WHERE  1=1
+           AND  cmu.CMMNTY_ID = #{cmmntyId}
+			 <if test="emplyrId != null and emplyrId neq ''">
+				 AND cmu.EMPLYR_ID = #{emplyrId}
+			 </if>
+	     ORDER  BY MNGR_AT DESC, usr.USER_NM
+		 LIMIT  #{recordCountPerPage} OFFSET #{firstIndex}
+	</select>
+
+	<select id="selectCommunityUserNPList" parameterType="CommunityUserVO" resultType="egovMap">
+		SELECT  cmu.*
+		  FROM  TB_CMMNTYUSER cmu
+		 INNER  JOIN TB_CMMNTY cmm
+		    ON  cmu.CMMNTY_ID = cmm.CMMNTY_ID
+		  LEFT  JOIN ( SELECT  ESNTL_ID, USER_ID, USER_NM
+		  			     FROM  VIEW_USERMASTER ) usr
+			ON  cmu.FRST_REGISTER_ID = usr.ESNTL_ID
+		  LEFT  JOIN ( SELECT  CODE_ID, CODE, CODE_NM
+			  		     FROM  TB_CMMNDETAILCODE
+						WHERE  CODE_ID = 'CMU001'
+						  AND  USE_AT='Y' ) cod
+		    ON  cmu.MBER_STTUS = cod.CODE
+		 WHERE  1=1
+ 		   AND  cmu.CMMNTY_ID = #{cmmntyId}
+		<if test="emplyrId != null and emplyrId neq ''">
+			AND cmu.EMPLYR_ID = #{emplyrId}
+		</if>
+	</select>
+
+	<select id="selectCommunityUserListCnt" parameterType="CommunityUserVO" resultType="java.lang.Integer">
+		SELECT  COUNT(EMPLYR_ID)
+		  FROM  TB_CMMNTYUSER cmu
+		 INNER  JOIN TB_CMMNTY cmm
+		    ON  cmu.CMMNTY_ID = cmm.CMMNTY_ID
+		  LEFT  JOIN ( SELECT  ESNTL_ID, USER_ID, USER_NM
+		                 FROM  VIEW_USERMASTER ) usr
+		    ON  cmu.FRST_REGISTER_ID = usr.ESNTL_ID
+         WHERE  1=1
+           AND  cmu.CMMNTY_ID = #{cmmntyId}
+		<if test="emplyrId != null and emplyrId neq ''">
+			AND cmu.EMPLYR_ID = #{emplyrId}
+		</if>
+	</select>
+
+	<select id="selectCommunityMasterDetail" parameterType="CommunityVO" resultType="CommunityVO">
+	  SELECT
+			  cmm.*
+		  <if test="authority != null and authority neq ''">
+		   ,  CASE WHEN #{authority} = 'ROLE_ADMIN' THEN #{authority}
+				   WHEN FRST_REGISTER_ID = #{sessionUniqId} THEN #{authority} ELSE '' END CMMNTY_AUTH
+		   , (SELECT  CASE WHEN COUNT(*) > 0 THEN #{authority} ELSE '' END
+			    FROM  TB_CMMNTYUSER mem
+			   WHERE  cmm.CMMNTY_ID = mem.CMMNTY_ID
+				 AND  MBER_STTUS = 'STTS02'
+				 AND  EMPLYR_ID  = #{sessionUniqId}
+		       ) as USER_AUTH
+		  </if>
+		FROM  TB_CMMNTY cmm
+		LEFT  JOIN ( SELECT  ESNTL_ID, USER_ID, USER_NM
+				   	   FROM  VIEW_USERMASTER ) usr
+						 ON  cmm.FRST_REGISTER_ID = usr.ESNTL_ID
+		WHERE  CMMNTY_ID = #{cmmntyId}
+	</select>
+
+	<select id="selectCommunityUserDetail" parameterType="CommunityUserVO" resultType="CommunityUserVO">
+		SELECT SUM(STTS01) as STTS01, SUM(STTS02) as STTS02, SUM(STTS03) as STTS03, SUM(STTS04) as STTS04
+		FROM (
+				 SELECT  CASE WHEN MBER_STTUS = 'STTS01' THEN 1 ELSE 0 END as STTS01
+					  ,  CASE WHEN MBER_STTUS = 'STTS02' THEN 1 ELSE 0 END as STTS02
+					  ,  CASE WHEN MBER_STTUS = 'STTS03' THEN 1 ELSE 0 END as STTS03
+					  ,  CASE WHEN MBER_STTUS = 'STTS04' THEN 1 ELSE 0 END as STTS04
+				   FROM  TB_CMMNTYUSER
+		          WHERE  CMMNTY_ID = #{cmmntyId}
+			 ) X
+	</select>
+
+	<insert id="insertCommunity">
+		INSERT INTO TB_CMMNTY
+		(  CMMNTY_ID
+		,  BBS_ID
+		,  CMMNTY_NM
+		,  CMMNTY_SUB_NM
+		,  CMMNTY_INTRCN
+		,  CMMNTY_CN
+		,  USE_AT
+		,  PERMIT_AT
+		,  ATCH_FILE_ID
+		,  THUMB_ATCH_FILE_ID
+		,  RDCNT
+		,  FRST_REGIST_PNTTM
+		,  FRST_REGISTER_ID
+		,  LAST_UPDT_PNTTM
+		,  LAST_UPDUSR_ID
+		)
+		VALUES
+		(
+		   #{cmmntyId}
+		,  #{bbsId}
+		,  #{cmmntyNm}
+		,  #{cmmntySubNm}
+		,  #{cmmntyIntrcn}
+		,  #{cmmntyCn}
+		,  #{useAt}
+		,  #{permitAt}
+		,  #{atchFileId}
+	    ,  #{thumbAtchFileId}
+		,  #{rdcnt}
+		,  sysdate()
+		,  #{frstRegisterId}
+		,  sysdate()
+		,  #{frstRegisterId}
+		)
+	</insert>
+
+	<update id="updateCommunity">
+		UPDATE  TB_CMMNTY
+		   SET  CMMNTY_NM     = #{cmmntyNm}
+		     ,  CMMNTY_SUB_NM = #{cmmntySubNm}
+		     ,  CMMNTY_INTRCN = #{cmmntyIntrcn}
+		     ,  CMMNTY_CN     = #{cmmntyCn}
+		     ,  USE_AT        = #{useAt}
+		     ,  PERMIT_AT     = #{permitAt}
+			 ,  ATCH_FILE_ID  = #{atchFileId}
+			 ,  THUMB_ATCH_FILE_ID = #{thumbAtchFileId}
+		     ,	LAST_UPDUSR_ID     = #{lastUpdusrId}
+		     ,	LAST_UPDT_PNTTM    = SYSDATE()
+		 WHERE  CMMNTY_ID = #{cmmntyId}
+	</update>
+
+	<update id="updateRdcnt">
+		UPDATE  TB_CMMNTY
+		   SET  RDCNT  = (SELECT * FROM (SELECT MAX(IFNULL(RDCNT,0))+1 FROM TB_CMMNTY WHERE CMMNTY_ID = #{cmmntyId}) tbl)
+		 WHERE  CMMNTY_ID = #{cmmntyId}
+	</update>
+
+	<delete id="deleteCommunity">
+		DELETE
+		  FROM  TB_CMMNTY
+	     WHERE  CMMNTY_ID = #{cmmntyId}
+	</delete>
+
+	<insert id="insertCommunityUser">
+		INSERT INTO TB_CMMNTYUSER
+		(  CMMNTY_ID
+        ,  EMPLYR_ID
+        ,  MNGR_AT
+        ,  MBER_STTUS
+        ,  SBSCRB_DE
+        ,  SECSN_DE
+        ,  USE_AT
+		,  FRST_REGIST_PNTTM
+		,  FRST_REGISTER_ID
+		,  LAST_UPDT_PNTTM
+		,  LAST_UPDUSR_ID
+		)
+		VALUES
+		(
+		   #{cmmntyId}
+		,  #{emplyrId}
+		,  #{mngrAt}
+		,  #{mberSttus}
+		,  sysdate()
+		,  #{secsnDe}
+		,  #{useAt}
+		,  sysdate()
+		,  #{frstRegisterId}
+		,  sysdate()
+		,  #{frstRegisterId}
+		)
+	</insert>
+
+	<update id="updateCommunityUser">
+		UPDATE  TB_CMMNTYUSER
+		   SET  MNGR_AT         = #{mngrAt}
+		     ,  MBER_STTUS      = #{mberSttus}
+		     ,  SBSCRB_DE       = sysdate()
+		     ,  USE_AT          = #{useAt}
+		     ,  LAST_UPDUSR_ID  = #{lastUpdusrId}
+		     ,  LAST_UPDT_PNTTM = sysdate()
+		 WHERE  CMMNTY_ID = #{cmmntyId}
+           AND  EMPLYR_ID = #{emplyrId}
+	</update>
+
+	<!-- 탈퇴 -->
+	<update id="updateCommunityUserEnd">
+		UPDATE  TB_CMMNTYUSER
+		   SET  MBER_STTUS      = 'STTS04'
+		     ,  SECSN_DE        = sysdate()
+		     ,  USE_AT          = 'N'
+		     ,  LAST_UPDUSR_ID  = #{lastUpdusrId}
+		     ,  LAST_UPDT_PNTTM = sysdate()
+		WHERE  CMMNTY_ID = #{cmmntyId}
+		  AND  EMPLYR_ID = #{emplyrId}
+	</update>
+
+	<!-- 상태변경 처리 -->
+	<update id="updateCommunityUserStts">
+		UPDATE  TB_CMMNTYUSER
+		   SET  MBER_STTUS      = #{mberSttus}
+		     ,  LAST_UPDUSR_ID  = #{lastUpdusrId}
+		     ,  LAST_UPDT_PNTTM = sysdate()
+		 WHERE  CMMNTY_ID = #{cmmntyId}
+ 		   AND  EMPLYR_ID = #{emplyrId}
+	</update>
+
+	<delete id="deleteCommunityUser">
+		DELETE
+		  FROM  TB_CMMNTYUSER
+		 WHERE  CMMNTY_ID = #{cmmntyId}
+	</delete>
+</mapper>

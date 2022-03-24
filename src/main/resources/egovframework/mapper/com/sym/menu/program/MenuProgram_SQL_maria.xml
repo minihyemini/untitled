@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="jisungsoft.com.repository.sym.MenuProgramMapper">
+
+	<sql id="searchProgramList">
+		<if test="@egovframework.com.cmm.util.EgovMybaitsUtil@isNotEmpty(searchKeyword)">
+			<if test="searchCondition == 0">
+				AND
+				(A.PROGRM_KOREAN_NM LIKE CONCAT('%' , #{searchKeyword}, '%')
+				OR
+				A.PROGRM_DC LIKE CONCAT('%' , #{searchKeyword}, '%')
+				OR
+				A.PROGRM_FILE_NM LIKE CONCAT('%' , #{searchKeyword}, '%'))
+			</if>
+			<if test="searchCondition == 1">
+				AND
+				A.PROGRM_KOREAN_NM LIKE CONCAT('%' , #{searchKeyword}, '%')
+			</if>
+			<if test="searchCondition == 2">
+				AND
+				A.PROGRM_DC LIKE CONCAT('%' , #{searchKeyword}, '%')
+			</if>
+			<if test="searchCondition == 3">
+				AND
+				A.PROGRM_FILE_NM LIKE CONCAT('%' , #{searchKeyword}, '%')
+			</if>
+		</if>
+	</sql>
+
+	<select id="selectMenuProgramDetail" resultType="MenuProgram">
+		SELECT A.PROGRM_ID
+			, A.PROGRM_FILE_NM
+			, A.PROGRM_STRE_PATH
+			, A.PROGRM_KOREAN_NM
+			, A.PROGRM_DC
+			, A.URL
+			, A.FRST_REGIST_PNTTM
+			, A.LAST_UPDT_PNTTM
+			, A.PROGRM_QUERY
+		FROM
+			TB_PROGRMLIST A
+		WHERE
+			A.PROGRM_ID = #{progrmId}
+		<if test="url != null and url neq ''">
+			AND A.URL = #{url}
+		</if>
+		<if test="progrmFileNm != null and progrmFileNm neq ''">
+			AND A.PROGRM_FILE_NM = #{progrmFileNm}
+		</if>
+		LIMIT 1
+	</select>
+
+	<select id="selectProgramList" resultType="MenuProgram">
+		SELECT
+		    A.PROGRM_ID,
+			A.PROGRM_FILE_NM,
+			A.PROGRM_STRE_PATH,
+			A.PROGRM_KOREAN_NM,
+			A.PROGRM_DC,
+			A.URL,
+			A.PROGRM_QUERY,
+			A.PROGRM_CODE,
+		FROM
+			TB_PROGRMLIST A
+		WHERE
+			1 = 1
+		<include refid="searchProgramList"/>
+		ORDER BY A.FRST_REGIST_PNTTM DESC
+		LIMIT #{recordCountPerPage} OFFSET #{firstIndex}
+	</select>
+
+	<select id="selectProgramListTotCnt" resultType="java.lang.Integer">
+		SELECT
+			COUNT(1)
+		FROM
+			(
+				SELECT
+					A.*
+				FROM
+					TB_PROGRMLIST A
+				WHERE
+					1 = 1
+				<include refid="searchProgramList"/>
+			) AS cnt
+	</select>
+
+	<select id="selectProgramDetail" resultType="MenuProgram">
+		SELECT
+			A.PROGRM_ID,
+			A.PROGRM_FILE_NM,
+			A.PROGRM_STRE_PATH,
+			A.PROGRM_KOREAN_NM,
+			A.PROGRM_DC,
+			A.URL,
+			A.PROGRM_QUERY,
+			A.PROGRM_CODE
+		FROM
+			TB_PROGRMLIST A
+		WHERE
+			A.PROGRM_ID = #{progrmId}
+	</select>
+
+	<insert id="insertProgram">
+		<selectKey keyProperty="progrmId" resultType="java.lang.Integer" order="BEFORE">
+			SELECT IFNULL(MAX(PROGRM_ID),0)+1 AS PROGRM_ID  FROM TB_PROGRMLIST
+		</selectKey>
+
+		INSERT INTO
+			TB_PROGRMLIST
+		(
+			PROGRM_ID,
+			PROGRM_FILE_NM,
+			PROGRM_STRE_PATH,
+			PROGRM_KOREAN_NM,
+			PROGRM_DC,
+			URL,
+			PROGRM_QUERY,
+			PROGRM_CODE,
+			FRST_REGIST_PNTTM
+		) VALUES (
+			#{progrmId},
+			#{progrmFileNm},
+			#{progrmStrePath},
+			#{progrmKoreanNm},
+			#{progrmDc},
+			#{url},
+		    #{progrmQuery},
+			#{progrmCode},
+      		sysdate()
+		)
+	</insert>
+
+	<update id="updateProgram">
+		UPDATE
+			TB_PROGRMLIST
+		SET
+			PROGRM_FILE_NM = #{progrmFileNm},
+			PROGRM_STRE_PATH = #{progrmStrePath},
+			PROGRM_KOREAN_NM = #{progrmKoreanNm},
+			PROGRM_DC = #{progrmDc},
+			URL = #{url},
+			PROGRM_QUERY = #{progrmQuery},
+			PROGRM_CODE = #{progrmCode},
+			LAST_UPDT_PNTTM = sysdate()
+		WHERE
+			PROGRM_ID = #{progrmId}
+	</update>
+
+	<update id="updateMenuProgram">
+		UPDATE
+			TB_MENUINFO
+		SET
+			PROGRM_FILE_NM = #{progrmFileNm}
+		WHERE
+			PROGRM_ID = #{progrmId}
+	</update>
+
+	<delete id="deleteProgram">
+		DELETE  FROM
+			TB_PROGRMLIST
+		WHERE
+			PROGRM_ID = #{progrmId}
+	</delete>
+
+	<select id="selectProgramNmByPk" parameterType="MenuProgram" resultType="java.lang.Integer">
+		SELECT
+			COUNT(1)
+		FROM
+			TB_PROGRMLIST
+		WHERE
+			PROGRM_ID = #{progrmId}
+	</select>
+
+	<select id="selectProgramAllList" resultType="MenuProgram">
+		SELECT
+			A.PROGRM_ID,
+			A.PROGRM_FILE_NM,
+			A.PROGRM_STRE_PATH,
+			A.PROGRM_KOREAN_NM,
+			A.PROGRM_DC,
+			A.PROGRM_QUERY,
+			A.PROGRM_CODE,
+			A.URL
+		FROM
+			TB_PROGRMLIST A
+		WHERE
+			1 = 1
+		<include refid="searchProgramList"/>
+	</select>
+</mapper>

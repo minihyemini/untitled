@@ -1,0 +1,378 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+	수정일                 수정자                          수정내용
+  =========     =======    =================================================
+  2011.8.26   	서준식     	 	SSO 로그인을 위한 쿼리 추가
+  2011.09.27    서준식              컬럼 변경 SUB_DN 을  CRTFC_DN_VALUE 로 변경
+  2011.09.28    서준식              컬럼 변경 entrprsmber_id 을  ENTRPRS_MBER_ID 로 변경
+-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="jisungsoft.com.repository.member.EmployeeMemberMapper">
+
+    <sql id="searchSelectUserList">
+<!--
+        <if test='sbscrbSttus != null and sbscrbSttus neq "0" and sbscrbSttus neq ""'>
+            AND sttus LIKE  #{sbscrbSttus}
+        </if>
+-->
+        <if test="@egovframework.com.cmm.util.EgovMybaitsUtil@isNotEmpty(searchKeyword)">
+            <if test="searchCondition == 0">
+                AND (
+                emp.EMPLYR_ID LIKE CONCAT('%',#{searchKeyword},'%')
+                OR
+                emp.EMPLYR_NM LIKE CONCAT('%',#{searchKeyword},'%')
+                OR
+                emp.OFCPS_NM LIKE CONCAT('%',#{searchKeyword},'%')
+                )
+            </if>
+            <if test="searchCondition == 1">
+                AND emp.EMPLYR_ID LIKE CONCAT('%',#{searchKeyword},'%')
+            </if>
+            <if test="searchCondition == 2">
+                AND emp.EMPLYR_NM LIKE CONCAT('%',#{searchKeyword},'%')
+            </if>
+            <if test="searchCondition == 3">
+                AND emp.OFCPS_NM LIKE CONCAT('%',#{searchKeyword},'%')
+            </if>
+        </if>
+    </sql>
+    <sql id="searchSelectUserAllList">
+        <if test="searchCondition == 0">
+            AND
+            (GROUP_NM LIKE CONCAT('%',#{searchKeyword},'%') OR
+            USER_ID LIKE CONCAT('%',#{searchKeyword},'%') OR
+            USER_NM LIKE CONCAT('%',#{searchKeyword},'%'))
+        </if>
+        <if test="searchCondition == 1">
+            AND
+            GROUP_NM LIKE CONCAT('%',#{searchKeyword},'%')
+        </if>
+        <if test="searchCondition == 2">
+            AND
+            USER_ID LIKE CONCAT('%',#{searchKeyword},'%')
+        </if>
+        <if test="searchCondition == 3">
+            AND
+            USER_NM LIKE CONCAT('%',#{searchKeyword},'%')
+        </if>
+    </sql>
+
+    <select id="selectUserAllList" resultType="EmployeeMember">
+        SELECT
+            usr.ESNTL_ID, grp.GROUP_NM, usr.USER_ID, usr.USER_NM, usr.USER_ADRES, usr.USER_EMAIL
+        FROM
+            VIEW_USERMASTER usr
+        LEFT JOIN TB_AUTHORGROUPINFO grp ON usr.GROUP_ID = grp.GROUP_ID
+        WHERE 1=1
+        <include refid="searchSelectUserAllList"/>
+        ORDER  BY
+            grp.GROUP_NM, USER_NM
+        LIMIT #{recordCountPerPage} OFFSET #{firstIndex}
+    </select>
+
+    <select id="selectUserAllListTotCnt" resultType="java.lang.Integer">
+        SELECT
+            COUNT(usr.USER_ID)
+        FROM
+            VIEW_USERMASTER usr
+        LEFT JOIN TB_AUTHORGROUPINFO grp ON usr.GROUP_ID = grp.GROUP_ID
+        WHERE 1=1
+        <include refid="searchSelectUserAllList"/>
+    </select>
+
+    <select id="selectEmployeeNumberForYearMaxCnt" resultType="java.lang.Integer">
+        select COUNT(1)+1 from TB_EMPLYRINFO
+        WHERE
+            DATE_FORMAT(JOINING_DATE,'%Y') = #{searchYear}
+    </select>
+
+	<select id="selectEmployeeMemberList" resultType="EmployeeMember">
+        SELECT emp.ESNTL_ID AS uniqId
+            , 'USR' AS userTy
+            , emp.EMPLYR_ID
+            , emp.EMPLYR_NM
+            , emp.EMPLYR_NUM
+            , emp.PASSWORD
+            , emp.SEXDSTN_CODE
+            , emp.BRTHDY
+            , emp.ADRES
+            , emp.AREA_NO
+            , emp.DETAIL_ADRES
+            , emp.ZIP
+            , emp.OFFM_TELNO
+            , emp.MBTLNUM
+            , emp.EMAIL_ADRES
+            , emp.OFCPS_NM
+            , emp.PSTINST_CODE
+            , emp.EMPLYR_STTUS_CODE
+            , emp.LOCK_AT
+            , emp.LOCK_CNT
+            , emp.LOCK_LAST_PNTTM
+            , emp.SBSCRB_DE
+            , emp.FOREIGNER_AT
+            , emp.ATTENDANCE_AT
+            , emp.JOINING_DATE
+            , emp.QUITTING_DATE
+            , grp.GROUP_ID
+            , grp.GROUP_NM
+            , org.ORGNZT_ID
+            , org.ORGNZT_NM
+            , est.AUTHOR_CODE
+        FROM
+            TB_EMPLYRINFO emp
+        LEFT OUTER JOIN TB_AUTHORGROUPINFO grp ON emp.GROUP_ID = grp.GROUP_ID
+        LEFT OUTER JOIN TB_ORGNZTINFO org ON grp.ORGNZT_ID = org.ORGNZT_ID
+        LEFT OUTER JOIN TB_EMPLYRSCRTYESTBS est ON emp.ESNTL_ID = est.SCRTY_DTRMN_TRGET_ID
+        WHERE
+        1 = 1
+        <include refid="searchSelectUserList"/>
+        ORDER BY SBSCRB_DE DESC
+        LIMIT #{recordCountPerPage} OFFSET #{firstIndex}
+    </select>
+
+    <select id="selectEmployeeMemberAllList" resultType="EmployeeMember">
+        SELECT emp.ESNTL_ID AS uniqId
+            , 'USR' AS userTy
+            , emp.EMPLYR_ID
+            , emp.EMPLYR_NM
+            , emp.EMPLYR_NUM
+            , emp.PASSWORD
+            , emp.SEXDSTN_CODE
+            , emp.BRTHDY
+            , emp.ADRES
+            , emp.AREA_NO
+            , emp.DETAIL_ADRES
+            , emp.ZIP
+            , emp.OFFM_TELNO
+            , emp.MBTLNUM
+            , emp.EMAIL_ADRES
+            , emp.OFCPS_NM
+            , emp.PSTINST_CODE
+            , emp.EMPLYR_STTUS_CODE
+            , emp.LOCK_AT
+            , emp.LOCK_CNT
+            , emp.LOCK_LAST_PNTTM
+            , emp.SBSCRB_DE
+            , emp.FOREIGNER_AT
+            , emp.ATTENDANCE_AT
+            , emp.JOINING_DATE
+            , emp.QUITTING_DATE
+            , grp.GROUP_ID
+            , grp.GROUP_NM
+            , org.ORGNZT_ID
+            , org.ORGNZT_NM
+            , est.AUTHOR_CODE
+        FROM
+            TB_EMPLYRINFO emp
+        LEFT OUTER JOIN TB_AUTHORGROUPINFO grp ON emp.GROUP_ID = grp.GROUP_ID
+        LEFT OUTER JOIN TB_ORGNZTINFO org ON grp.ORGNZT_ID = org.ORGNZT_ID
+        LEFT OUTER JOIN TB_EMPLYRSCRTYESTBS est ON emp.ESNTL_ID = est.SCRTY_DTRMN_TRGET_ID
+        WHERE
+        1 = 1
+        <include refid="searchSelectUserList"/>
+        ORDER BY SBSCRB_DE DESC
+    </select>
+
+    <select id="selectEmployeeMemberTotCnt" resultType="java.lang.Integer">
+        SELECT
+            COUNT(1) totcnt
+        FROM
+            (
+                SELECT
+                    emp.ESNTL_ID AS uniqId,
+                    emp.EMPLYR_ID AS userId,
+                    emp.EMPLYR_NM AS userNm
+                FROM
+                    TB_EMPLYRINFO emp
+            ) A
+        WHERE
+            1 = 1
+        <include refid="searchSelectUserList"/>
+    </select>
+
+    <select id="selectEmployeeMember" resultType="EmployeeMember">
+        SELECT emp.ESNTL_ID AS uniqId
+             , 'USR' AS userTy
+             , emp.EMPLYR_ID
+             , emp.EMPLYR_NM
+             , emp.EMPLYR_NUM
+             , emp.PASSWORD
+             , emp.SEXDSTN_CODE
+             , DATE_FORMAT(emp.BRTHDY,'%Y%m%d') as BRTHDY
+             , emp.ADRES
+             , emp.AREA_NO
+             , emp.DETAIL_ADRES
+             , emp.ZIP
+             , emp.OFFM_TELNO
+             , emp.MBTLNUM
+             , emp.EMAIL_ADRES
+             , emp.OFCPS_NM
+             , emp.PSTINST_CODE
+             , emp.EMPLYR_STTUS_CODE
+             , emp.LOCK_AT
+             , emp.LOCK_CNT
+             , emp.LOCK_LAST_PNTTM
+             , emp.SBSCRB_DE
+             , emp.FOREIGNER_AT
+             , emp.ATTENDANCE_AT
+             , DATE_FORMAT(emp.JOINING_DATE,'%Y%m%d') as JOINING_DATE
+             , DATE_FORMAT(emp.QUITTING_DATE,'%Y%m%d') as QUITTING_DATE
+             , grp.GROUP_ID
+             , grp.GROUP_NM
+             , org.ORGNZT_ID
+             , org.ORGNZT_NM
+             , est.AUTHOR_CODE
+        FROM
+            TB_EMPLYRINFO emp
+            LEFT OUTER JOIN TB_AUTHORGROUPINFO grp ON emp.GROUP_ID = grp.GROUP_ID
+            LEFT OUTER JOIN TB_ORGNZTINFO org ON grp.ORGNZT_ID = org.ORGNZT_ID
+            LEFT OUTER JOIN TB_EMPLYRSCRTYESTBS est ON emp.ESNTL_ID = est.SCRTY_DTRMN_TRGET_ID
+        WHERE
+            emp.ESNTL_ID = #{uniqId}
+    </select>
+
+    <insert id="insertEmployeeMember">
+        INSERT INTO
+            TB_EMPLYRINFO
+        (   EMPLYR_ID
+            , EMPLYR_NM
+            , EMPLYR_NUM
+            , PASSWORD
+            , SEXDSTN_CODE
+            , FOREIGNER_AT
+            , ATTENDANCE_AT
+            , BRTHDY
+            , ADRES
+            , AREA_NO
+            , DETAIL_ADRES
+            , ZIP
+            , OFFM_TELNO
+            , MBTLNUM
+            , EMAIL_ADRES
+            , OFCPS_NM
+            , GROUP_ID
+            , PSTINST_CODE
+            , EMPLYR_STTUS_CODE
+            , ESNTL_ID
+            , JOINING_DATE
+            , QUITTING_DATE
+            , SBSCRB_DE
+        ) VALUES (
+            #{emplyrId}
+            , #{emplyrNm}
+            , #{emplyrNum}
+            , #{password}
+            , #{sexdstnCode}
+            , #{foreignerAt}
+            , #{attendanceAt}
+            , #{brthdy}
+            , #{adres}
+            , #{areaNo}
+            , #{detailAdres}
+            , #{zip}
+            , #{offmTelno}
+            , #{mbtlnum}
+            , #{emailAdres}
+            , #{ofcpsNm}
+            , #{groupId}
+            , #{pstinstCode}
+            , #{emplyrSttusCode}
+            , #{uniqId}
+            , #{joiningDate}
+            , #{quittingDate}
+            , sysdate()
+        )
+    </insert>
+
+    <update id="updateEmployeeMember">
+        UPDATE
+            TB_EMPLYRINFO
+        SET
+            EMPLYR_ID = #{emplyrId}
+            , EMPLYR_NM = #{emplyrNm}
+            , FOREIGNER_AT = #{foreignerAt}
+            , ATTENDANCE_AT = #{attendanceAt}
+            , SEXDSTN_CODE = #{sexdstnCode}
+            , ADRES = #{adres}
+            , AREA_NO = #{areaNo}
+            , DETAIL_ADRES = #{detailAdres}
+            , ZIP = #{zip}
+            , OFFM_TELNO = #{offmTelno}
+            , MBTLNUM = #{mbtlnum}
+            , EMAIL_ADRES = #{emailAdres}
+            , OFCPS_NM = #{ofcpsNm}
+            , BRTHDY = #{brthdy}
+            , GROUP_ID = #{groupId}
+            , PSTINST_CODE = #{pstinstCode}
+            , EMPLYR_STTUS_CODE = #{emplyrSttusCode}
+            , LOCK_AT = #{lockAt}
+            , JOINING_DATE = #{joiningDate}
+            , QUITTING_DATE = #{quittingDate}
+        WHERE
+            ESNTL_ID = #{uniqId}
+    </update>
+
+    <delete id="deleteEmployeeMember">
+        DELETE FROM
+            TB_EMPLYRINFO
+        WHERE
+            ESNTL_ID = #{uniqId}
+    </delete>
+
+    <select id="selectIdFotDplct" resultType="java.lang.Integer" parameterType="java.lang.String">
+        SELECT
+            COUNT(1) AS usedCnt
+        FROM
+            VIEW_USERMASTER
+        WHERE
+            USER_ID = #{checkId}
+    </select>
+
+    <select id="selectEmailFotDplct" resultType="java.lang.Integer" parameterType="java.lang.String">
+        SELECT
+            COUNT(1) AS usedCnt
+        FROM
+            VIEW_USERMASTER
+        WHERE
+            USER_EMAIL = #{checkId}
+    </select>
+
+    <update id="updatePassword">
+        UPDATE
+            TB_EMPLYRINFO
+        SET
+            PASSWORD = #{password}
+        WHERE
+            ESNTL_ID = #{uniqId}
+    </update>
+
+    <update id="updateLockIncorrect">
+        UPDATE
+            TB_EMPLYRINFO
+        SET
+            LOCK_AT = 'N',
+            LOCK_CNT = 0,
+            LOCK_LAST_PNTTM = NULL
+        WHERE
+            ESNTL_ID = #{uniqId}
+    </update>
+
+    <update id="updateEmployeeMemberEmail">
+        UPDATE
+            TB_EMPLYRINFO
+        SET
+            EMAIL_ADRES = #{emailAdres}
+        WHERE
+            ESNTL_ID = #{uniqId}
+    </update>
+
+    <update id="secessionEmployeeMemberAccount">
+        UPDATE
+            TB_EMPLYRINFO
+        SET
+            EMPLYR_STTUS_CODE = 'D'
+        WHERE
+            ESNTL_ID = #{uniqId}
+    </update>
+</mapper>

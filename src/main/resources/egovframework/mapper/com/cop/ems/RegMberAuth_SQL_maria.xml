@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?><!--Converted at: Wed May 11 15:49:52 KST 2016-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="RegMberAuthDAO">
+
+    <sql id="searchRegAuthKeyList">
+        <if test="@egovframework.com.cmm.util.EgovMybaitsUtil@isNotEmpty(searchKeyword)">
+            <if test="searchCondition eq 0">
+
+            </if>
+            <if test="searchCondition eq 1">
+
+            </if>
+            <if test="searchCondition eq 2">
+
+            </if>
+        </if>
+    </sql>
+
+    <select id="selectRegAuthKeyList" parameterType="RegMberAuthVO" resultType="RegMberAuthVO">
+        SELECT
+            EMAIL_ADRES,
+            AUTH_AT,
+            AUTH_KEY
+        FROM
+             TB_REGMBERAUTH
+    </select>
+
+    <select id="selectRegAuthKeyDetail" parameterType="RegMberAuthVO" resultType="RegMberAuthVO">
+        SELECT
+            EMAIL_ADRES,
+            AUTH_AT,
+            AUTH_KEY
+        FROM
+            TB_REGMBERAUTH
+        WHERE
+            EMAIL_ADRES = #{emailAdres}
+        AND AUTH_KEY = #{authKey}
+    </select>
+
+    <select id="selectRegAuthKeyCheck" parameterType="RegMberAuthVO" resultType="java.lang.Integer">
+        SELECT
+            COUNT(1)
+        FROM
+            TB_REGMBERAUTH
+        WHERE
+            EMAIL_ADRES = #{emailAdres}
+        AND AUTH_KEY = #{authKey}
+        AND AUTH_AT = 'Y'
+    </select>
+
+    <insert id="insertRegAuthKey" parameterType="RegMberAuthVO">
+        INSERT INTO
+            TB_REGMBERAUTH(
+                EMAIL_ADRES,
+                AUTH_AT,
+                AUTH_KEY
+            ) VALUES (
+                #{emailAdres},
+                #{authAt},
+                #{authKey}
+            ) ON DUPLICATE KEY UPDATE
+                AUTH_KEY = #{authKey}
+    </insert>
+
+    <update id="updateRegAuthKey" parameterType="RegMberAuthVO">
+        UPDATE
+            TB_REGMBERAUTH
+        SET
+            AUTH_AT = #{authAt},
+            AUTH_KEY = #{authKey}
+        WHERE
+            EMAIL_ADRES = #{emailAdres}
+    </update>
+
+    <delete id="deleteRegAuthKey" parameterType="RegMberAuthVO">
+        DELETE FROM
+            TB_REGMBERAUTH
+        WHERE
+            EMAIL_ADRES = #{emailAdres}
+    </delete>
+</mapper>

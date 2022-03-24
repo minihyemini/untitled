@@ -1,0 +1,645 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ArticleDataDAO">
+
+	<sql id="searchArticle">
+		<if test="@egovframework.com.cmm.util.EgovMybaitsUtil@isNotEmpty(searchKeyword)">
+			<if test="searchCondition eq 0">
+				AND  (bbs.NTT_SJ LIKE CONCAT ('%', #{searchKeyword},'%') OR
+					  bbs.NTT_CN_LOOKUP LIKE CONCAT ('%', #{searchKeyword},'%') OR
+					  usr.USER_NM LIKE CONCAT ('%', #{searchKeyword},'%'))
+			</if>
+			<if test="searchCondition eq 1">
+				AND  bbs.NTT_SJ LIKE CONCAT ('%', #{searchKeyword},'%')
+			</if>
+			<if test="searchCondition eq 2">
+				AND  bbs.NTT_CN_LOOKUP LIKE CONCAT ('%', #{searchKeyword},'%')
+			</if>
+			<if test="searchCondition eq 3">
+				AND  usr.USER_NM LIKE CONCAT ('%', #{searchKeyword},'%')
+			</if>
+		</if>
+		<if test="pathSplit != null and pathSplit eq 'lms'">
+			<if test="noticeAt != null and noticeAt neq ''">
+				AND IFNULL(bbs.NOTICE_AT,'N') = #{noticeAt}
+			</if>
+			<if test="answerLc != null and answerLc eq 0">
+				AND bbs.ANSWER_LC = 0
+			</if>
+		</if>
+		<if test="pathSplit != null and pathSplit eq 'page'">
+			<![CDATA[
+			AND (IFNULL(NTCE_BGNDE,'19000101') <= DATE_FORMAT(SYSDATE(),"%Y%m%d") AND IFNULL(NTCE_ENDDE, '99991231') >= DATE_FORMAT(SYSDATE(),"%Y%m%d"))
+			]]>
+		</if>
+	</sql>
+
+	<sql id="searchArticleViewer">
+		<if test="@egovframework.com.cmm.util.EgovMybaitsUtil@isNotEmpty(searchKeyword)">
+			<if test="searchCondition eq 0">
+				AND  (
+				usr.USER_NM LIKE CONCAT ('%', #{searchKeyword},'%') OR
+				org.ORGNZT_NM LIKE CONCAT ('%', #{searchKeyword},'%') OR
+				grp.GROUP_NM LIKE CONCAT ('%', #{searchKeyword},'%')
+				)
+			</if>
+			<if test="searchCondition eq 1">
+				AND  usr.USER_NM LIKE CONCAT ('%', #{searchKeyword},'%')
+			</if>
+			<if test="searchCondition eq 2">
+				AND  org.ORGNZT_NM LIKE CONCAT ('%', #{searchKeyword},'%')
+			</if>
+			<if test="searchCondition eq 3">
+				AND  grp.GROUP_NM LIKE CONCAT ('%', #{searchKeyword},'%')
+			</if>
+		</if>
+	</sql>
+
+	<sql id="selectArticle">
+		SELECT  bbs.NTT_ID
+		     ,  bbs.NTT_SJ
+		     ,  bbs.NTT_CN
+		     ,  bbs.FRST_REGISTER_ID
+		     ,  IFNULL(usr.USER_NM, bbs.NTCR_NM) as FRST_REGISTER_NM
+		     ,  bbs.FRST_REGIST_PNTTM
+		     ,  bbs.RDCNT
+		     ,  bbs.ANSWER_AT
+		     ,  bbs.ANSWER_LC
+		     ,  bbs.USE_AT
+		     ,  bbs.ATCH_FILE_ID
+		     ,  bbs.THUMB_ATCH_FILE_ID
+			 ,  (SELECT FILE_SN FROM TB_FILEDETAIL WHERE ATCH_FILE_ID = bbs.THUMB_ATCH_FILE_ID LIMIT 1) as THUMB_FILE_SN
+		     ,  bbs.BBS_ID
+		     ,  bbs.NTCE_BGNDE
+		     ,  bbs.NTCE_ENDDE
+		     ,  bbs.SJ_BOLD_AT
+		     ,  bbs.NOTICE_AT
+		     ,  bbs.SECRET_AT
+		     ,  bbs.REPLY_AT
+		     ,  com.COMMENT_CO
+		     ,  bbs.SORT_ORDR
+             ,  (SELECT COUNT(*) FROM TB_FILEDETAIL WHERE ATCH_FILE_ID = bbs.ATCH_FILE_ID) as FILE_CNT
+		  FROM  TB_BBS bbs
+		  LEFT  JOIN VIEW_USERMASTER usr
+            ON  bbs.FRST_REGISTER_ID = usr.ESNTL_ID
+		  LEFT  JOIN (SELECT  NTT_ID, BBS_ID, COUNT(1) AS COMMENT_CO
+		                FROM  TB_COMMENT
+		               WHERE  USE_AT = 'Y'
+    		           GROUP  BY NTT_ID, BBS_ID) com
+		    ON  bbs.NTT_ID = com.NTT_ID
+		   AND  bbs.BBS_ID = com.BBS_ID
+	     WHERE  bbs.BBS_ID = #{bbsId}
+  		   AND  bbs.USE_AT = 'Y'
+	</sql>
+
+	<select id="selectArticleList" parameterType="ArticleDataVO" resultType="egovMap">
+		<include refid="selectArticle"/>
+		<include refid="searchArticle"/>
+	   ORDER  BY bbs.SORT_ORDR DESC, NTT_NO ASC
+	   LIMIT  #{recordCountPerPage} OFFSET #{firstIndex}
+	</select>
+
+	<select id="selectArticleNPList" parameterType="ArticleDataVO" resultType="egovMap">
+		<include refid="selectArticle"/>
+		ORDER  BY bbs.RDCNT DESC, bbs.SORT_ORDR DESC, NTT_NO ASC
+	</select>
+
+	<select id="selectNoticeArticleList" parameterType="ArticleDataVO" resultType="egovMap">
+		<include refid="selectArticle"/>
+		<include refid="searchArticle"/>
+		 AND  bbs.NOTICE_AT = 'Y'
+	   ORDER  BY bbs.SORT_ORDR DESC, NTT_NO ASC
+	   LIMIT  5
+	</select>
+
+	<select id="selectArticleListTotCnt" parameterType="ArticleDataVO" resultType="java.lang.Integer">
+		SELECT
+			    COUNT(bbs.NTT_ID)
+		  FROM  TB_BBS bbs
+		  LEFT  JOIN VIEW_USERMASTER usr
+		    ON  bbs.FRST_REGISTER_ID = usr.ESNTL_ID
+		  LEFT  JOIN (
+		                SELECT  NTT_ID, BBS_ID, COUNT(1) AS COMMENT_CO
+		                  FROM  TB_COMMENT
+		                 WHERE  USE_AT = 'Y'
+		                 GROUP  BY NTT_ID, BBS_ID
+		              ) com
+		    ON  bbs.NTT_ID = com.NTT_ID
+		   AND  bbs.BBS_ID = com.BBS_ID
+		 WHERE  bbs.BBS_ID = #{bbsId}
+		   AND  bbs.USE_AT = 'Y'
+		<include refid="searchArticle"/>
+	</select>
+
+	<select id="selectArticleDetail" parameterType="ArticleDataVO" resultType="ArticleDataVO">
+		SELECT  bbs.NTT_ID
+			 ,  bbs.NTT_SJ
+			 ,  bbs.NTT_CN
+		     ,  bmt.BBS_TY_CODE
+			 ,  bbs.FRST_REGISTER_ID
+			 ,  IFNULL(usr.USER_NM, bbs.NTCR_NM) as FRST_REGISTER_NM
+			 ,  bbs.FRST_REGIST_PNTTM
+			 ,  bbs.RDCNT
+			 ,  IFNULL(bbs.ANSWER_AT, 'N') as ANSWER_AT
+			 ,  bbs.ANSWER_LC
+			 ,  bbs.USE_AT
+			 ,  bbs.ATCH_FILE_ID
+			 ,  bbs.THUMB_ATCH_FILE_ID
+			 ,  bbs.BBS_ID
+			 ,  bbs.NTCE_BGNDE
+			 ,  bbs.NTCE_ENDDE
+			 ,  bbs.SJ_BOLD_AT
+			 ,  IFNULL(bbs.NOTICE_AT, 'N') as NOTICE_AT
+			 ,  IFNULL(bbs.SECRET_AT, 'N') as SECRET_AT
+			 ,  IFNULL(bbs.REPLY_AT, 'N') as REPLY_AT
+			 ,  com.COMMENT_CO
+			 ,  bbs.SORT_ORDR
+			 ,  (SELECT COUNT(*) FROM TB_FILEDETAIL WHERE ATCH_FILE_ID = bbs.ATCH_FILE_ID) as FILE_CNT
+		     ,  (SELECT  FRST_REGISTER_ID
+		           FROM  TB_BBS a
+		          WHERE  a.BBS_ID = bbs.BBS_ID
+		            AND  a.NTT_ID = bbs.SORT_ORDR
+		            AND  a.ANSWER_LC = 0) as answerAuth
+		FROM  TB_BBS bbs
+	   INNER  JOIN TB_BBSMASTER bmt
+		  ON  bbs.BBS_ID = bmt.BBS_ID
+	    LEFT  JOIN VIEW_USERMASTER usr
+		  ON  bbs.FRST_REGISTER_ID = usr.ESNTL_ID
+	    LEFT  JOIN (SELECT  NTT_ID, BBS_ID, COUNT(1) AS COMMENT_CO
+		              FROM  TB_COMMENT
+				     WHERE  USE_AT = 'Y'
+				     GROUP  BY NTT_ID, BBS_ID) com
+		   ON  bbs.NTT_ID = com.NTT_ID
+		  AND  bbs.BBS_ID = com.BBS_ID
+		WHERE  bbs.BBS_ID = #{bbsId}
+		  AND  bbs.USE_AT = 'Y'
+          AND  bbs.NTT_ID = #{nttId}
+	</select>
+
+	<select id="selectAnswerDetailList" parameterType="ArticleDataVO" resultType="egovMap">
+       SELECT  *
+         FROM  TB_BBS b
+        WHERE  BBS_ID = #{bbsId}
+          AND  USE_AT = 'Y'
+          AND  SORT_ORDR = ${nttId}
+		  AND  ANSWER_LC != 0
+        ORDER  BY NTT_NO
+	</select>
+
+	<insert id="insertArticle">
+		<selectKey keyProperty="nttNo" resultType="java.lang.Integer" order="BEFORE">
+			SELECT IFNULL(MAX(SORT_ORDR),0)+1 AS NTT_NO  FROM TB_BBS
+			WHERE BBS_ID = #{bbsId}
+		</selectKey>
+
+		INSERT INTO TB_BBS
+		(  NTT_ID
+		,  BBS_ID
+		,  NTT_NO
+		,  NTT_SJ
+		,  NTT_CN
+		,  ANSWER_AT
+		,  ANSWER_LC
+		,  SORT_ORDR
+		,  RDCNT
+		,  USE_AT
+		,  NTCE_BGNDE
+		,  NTCE_ENDDE
+		,  NTCR_ID
+		,  NTCR_NM
+		,  ATCH_FILE_ID
+		,  THUMB_ATCH_FILE_ID
+		,  NOTICE_AT
+		,  SJ_BOLD_AT
+		,  SECRET_AT
+		,  REPLY_AT
+		,  FRST_REGIST_PNTTM
+		,  FRST_REGISTER_ID
+		,  LAST_UPDT_PNTTM
+		,  LAST_UPDUSR_ID
+		,  NTT_CN_LOOKUP
+		) VALUES (
+		   #{nttId}
+		,  #{bbsId}
+		,  #{nttNo}
+		,  #{nttSj}
+		,  #{nttCn}
+		,  #{answerAt}
+		,  #{answerLc}
+		,  #{nttId}
+		,  #{rdcnt}
+		,  'Y'
+		,  IFNULL(#{ntceBgnde},'19000101')
+		,  IFNULL(#{ntceEndde},'99991231')
+		,  #{ntcrId}
+		,  #{ntcrNm}
+		,  #{atchFileId}
+		,  #{thumbAtchFileId}
+		,  #{noticeAt}
+		,  #{sjBoldAt}
+		,  #{secretAt}
+		,  #{replyAt}
+		,  sysdate()
+		,  #{frstRegisterId}
+		,  sysdate()
+		,  #{frstRegisterId}
+		,  #{nttCnLookup}
+		)
+	</insert>
+
+	<insert id="insertAnswer">
+		<selectKey keyProperty="nttNo" resultType="java.lang.Integer" order="BEFORE">
+			SELECT IFNULL(MAX(NTT_NO),0)+1 AS NTT_NO  FROM TB_BBS
+			 WHERE BBS_ID = #{bbsId} AND SORT_ORDR = #{sortOrdr}
+		</selectKey>
+
+		INSERT INTO TB_BBS
+		(  NTT_ID
+		,  BBS_ID
+		,  NTT_NO
+		,  NTT_SJ
+		,  NTT_CN
+		,  ANSWER_AT
+		,  ANSWER_LC
+		,  SORT_ORDR
+		,  RDCNT
+		,  USE_AT
+		,  NTCE_BGNDE
+		,  NTCE_ENDDE
+		,  NTCR_ID
+		,  NTCR_NM
+		,  ATCH_FILE_ID
+		,  THUMB_ATCH_FILE_ID
+		,  NOTICE_AT
+		,  SJ_BOLD_AT
+		,  SECRET_AT
+		,  REPLY_AT
+		,  FRST_REGIST_PNTTM
+		,  FRST_REGISTER_ID
+		,  LAST_UPDT_PNTTM
+		,  LAST_UPDUSR_ID
+		,  NTT_CN_LOOKUP
+		) VALUES (
+		   #{nttId}
+		,  #{bbsId}
+		,  #{nttNo}
+		,  #{nttSj}
+		,  #{nttCn}
+		,  #{answerAt}
+		,  #{answerLc}
+		,  #{sortOrdr}
+		,  #{rdcnt}
+		,  'Y'
+		,  IFNULL(#{ntceBgnde},'19000101')
+		,  IFNULL(#{ntceEndde},'99991231')
+		,  #{ntcrId}
+		,  #{ntcrNm}
+		,  #{atchFileId}
+		,  #{thumbAtchFileId}
+		,  #{noticeAt}
+		,  #{sjBoldAt}
+		,  #{secretAt}
+		,  #{replyAt}
+		,  sysdate()
+		,  #{frstRegisterId}
+		,  sysdate()
+		,  #{frstRegisterId}
+		,  #{nttCnLookup}
+		)
+	</insert>
+
+	<update id="updateArticle">
+		UPDATE  TB_BBS
+		   SET  NTT_SJ = #{nttSj}
+			 ,  NTT_CN = #{nttCn}
+			 ,  NTCE_BGNDE = IFNULL(#{ntceBgnde},'19000101')
+			 ,	NTCE_ENDDE = IFNULL(#{ntceEndde},'99991231')
+			 ,	LAST_UPDUSR_ID = #{lastUpdusrId}
+			 ,	ATCH_FILE_ID = #{atchFileId}
+		     ,  THUMB_ATCH_FILE_ID = #{thumbAtchFileId}
+			 ,	LAST_UPDT_PNTTM = SYSDATE()
+			 ,	SJ_BOLD_AT = #{sjBoldAt}
+		     ,  ANSWER_AT = #{answerAt}
+			 ,	NOTICE_AT = #{noticeAt}
+			 ,	SECRET_AT = #{secretAt}
+		     ,  REPLY_AT  = #{replyAt}
+		     ,  NTT_CN_LOOKUP = #{nttCnLookup}
+		WHERE BBS_ID = #{bbsId}
+		  AND NTT_ID = #{nttId}
+	</update>
+
+	<!-- 조회수 -->
+	<update id="updateRdcnt">
+		UPDATE  TB_BBS
+		   SET  RDCNT  = (SELECT * FROM (SELECT MAX(IFNULL(RDCNT,0))+1 FROM TB_BBS WHERE BBS_ID = #{bbsId} AND NTT_ID = #{nttId}) tbl)
+		 WHERE  BBS_ID = #{bbsId}
+ 		   AND  NTT_ID = #{nttId}
+	</update>
+
+	<!-- 게시글 삭제 -->
+	<delete id="deleteArticle">
+		DELETE
+		  FROM  TB_BBS
+		 WHERE  BBS_ID = #{bbsId}
+ 		   AND  NTT_ID = #{nttId}
+	</delete>
+
+    <!-- 게시글 댓글 -->
+	<sql id="searchComment">
+		<if test="nttId != null and nttId neq ''">
+		AND  NTT_ID = #{nttId}
+		</if>
+		AND  BBS_ID = #{bbsId}
+		AND  USE_AT = 'Y'
+	</sql>
+
+	<!-- 댓글 조회 -->
+	<select id="selectCommentList" parameterType="ArticleDataVO" resultType="egovMap">
+        SELECT
+                BBS_ID AS bbsId
+             ,  NTT_ID AS nttId
+             ,  ANSWER_NO AS answerNo
+             ,  WRTER_ID AS wrterId
+             ,  WRTER_NM AS wrterNm
+             ,  ANSWER AS answer
+             ,  DATE_FORMAT(LAST_UPDT_PNTTM, '%Y-%m-%d %T') lastUpdtPnttm
+             ,  LAST_UPDUSR_ID AS lastUpdUsrId
+        FROM
+            TB_COMMENT com
+        WHERE  1=1
+		<include refid="searchComment"/>
+	    LIMIT  #{recordCountPerPage} OFFSET #{firstIndex}
+	</select>
+
+	<select id="selectCommentNPList" parameterType="ArticleDataVO" resultType="egovMap">
+		SELECT
+		BBS_ID                                      bbsId
+		,  NTT_ID                                      nttId
+		,  ANSWER_NO                                   answerNo
+		,  WRTER_ID                                    wrterId
+		,  WRTER_NM                                    wrterNm
+		,  ANSWER                                      answer
+		,  DATE_FORMAT(LAST_UPDT_PNTTM, '%Y-%m-%d %T') lastUpdtPnttm
+		,  LAST_UPDUSR_ID                              lastUpdUsrId
+		FROM  TB_COMMENT
+		WHERE  1=1
+		<include refid="searchComment"/>
+	</select>
+
+	<select id="selectCommentCurList" parameterType="ArticleDataVO" resultType="egovMap">
+		SELECT
+		       BBS_ID                                      bbsId
+		    ,  NTT_ID                                      nttId
+		    ,  ANSWER_NO                                   answerNo
+		    ,  WRTER_ID                                    wrterId
+		    ,  WRTER_NM                                    wrterNm
+		    ,  ANSWER                                      answer
+		    ,  FRST_REGIST_PNTTM                           frstRegistPnttm
+		 FROM  TB_COMMENT
+		WHERE  1=1
+		  AND  DATEDIFF(SYSDATE(),FRST_REGIST_PNTTM) <![CDATA[<]]> 3
+		<include refid="searchComment"/>
+		ORDER  BY FRST_REGIST_PNTTM DESC
+	</select>
+
+	<select id="selectReplyDetail" parameterType="CommentVO" resultType="CommentVO">
+		SELECT
+			    BBS_ID            bbsId
+			 ,  NTT_ID            nttId
+			 ,  ANSWER_NO         answerNo
+			 ,  WRTER_ID          wrterId
+			 ,  WRTER_NM          wrterNm
+			 ,  ANSWER            answer
+		  FROM  TB_COMMENT
+		 WHERE  1=1
+		<include refid="searchComment"/>
+		   AND  ANSWER_NO = #{answerNo}
+	</select>
+
+	<select id="selectCommentListTotCnt" parameterType="ArticleDataVO" resultType="java.lang.Integer">
+		SELECT
+		       COUNT(ANSWER_NO)
+		 FROM  TB_COMMENT
+		WHERE  1=1
+		<include refid="searchComment"/>
+	</select>
+
+	<!-- 댓글 추가-->
+	<insert id="insertReply">
+		<selectKey keyProperty="answerNo" resultType="java.lang.Integer" order="BEFORE">
+			SELECT IFNULL(MAX(ANSWER_NO),0)+1 AS ANSWER_NO  FROM TB_COMMENT
+			WHERE  NTT_ID = #{nttId}
+			  AND  BBS_ID = #{bbsId}
+		</selectKey>
+
+		INSERT INTO TB_COMMENT
+		(  NTT_ID
+		,  BBS_ID
+		,  ANSWER_NO
+		,  WRTER_ID
+		,  WRTER_NM
+		,  ANSWER
+		,  USE_AT
+		,  FRST_REGIST_PNTTM
+		,  FRST_REGISTER_ID
+		,  LAST_UPDT_PNTTM
+		,  LAST_UPDUSR_ID
+		) VALUES (
+		   #{nttId}
+		,  #{bbsId}
+		,  #{answerNo}
+		,  #{wrterId}
+		,  #{wrterNm}
+		,  #{answer}
+	    ,  'Y'
+		,  sysdate()
+		,  #{frstRegisterId}
+		,  sysdate()
+		,  #{frstRegisterId}
+		)
+	</insert>
+
+	<!-- 댓글 수정-->
+	<update id="updateReply">
+		UPDATE  TB_COMMENT
+		   SET  ANSWER          = #{answer}
+		     ,  LAST_UPDUSR_ID  = #{frstRegisterId}
+		     ,  LAST_UPDT_PNTTM = sysdate()
+		 WHERE  BBS_ID = #{bbsId}
+		   AND  NTT_ID = #{nttId}
+           AND  ANSWER_NO = #{answerNo}
+	</update>
+
+	<!-- 댓글 삭제-->
+	<delete id="deleteReply">
+		DELETE
+		  FROM  TB_COMMENT
+		 WHERE  BBS_ID = #{bbsId}
+ 		   AND  NTT_ID = #{nttId}
+		   AND  ANSWER_NO = #{answerNo}
+	</delete>
+
+	<!-- 게시판열람자이력 목록-->
+	<select id="selectBbsViewerList" parameterType="BbsViewerLogVO" resultType="egovMap">
+		SELECT
+			bvw.BV_ID,
+			bvw.ESNTL_ID,
+			bvw.NTT_ID,
+			DATE_FORMAT(bvw.FRST_REGIST_PNTTM,'%Y.%m.%d. %r') AS FRST_REGIST_PNTTM,
+			usr.USER_NM,
+			usr.USER_ID,
+			usr.GROUP_ID,
+			grp.GROUP_NM,
+			org.ORGNZT_NM
+		FROM
+			TB_BBSVIEWERLOG bvw
+		LEFT JOIN VIEW_USERMASTER usr ON bvw.ESNTL_ID = usr.ESNTL_ID
+		LEFT JOIN TB_AUTHORGROUPINFO grp ON usr.GROUP_ID = grp.GROUP_ID
+		LEFT JOIN TB_ORGNZTINFO org ON grp.ORGNZT_ID = org.ORGNZT_ID
+		WHERE
+		1 = 1
+		<if test="nttId != null and nttId != 0">
+			AND
+			bvw.NTT_ID = #{nttId}
+		</if>
+		<include refid="searchArticleViewer"/>
+		ORDER BY bvw.FRST_REGIST_PNTTM DESC
+		LIMIT  #{recordCountPerPage} OFFSET #{firstIndex}
+	</select>
+
+	<!-- 게시판열람자이력 목록 카운트-->
+	<select id="selectBbsViewerListCnt" parameterType="BbsViewerLogVO" resultType="java.lang.Integer">
+		SELECT COUNT(1) FROM (
+			SELECT
+				bvw.BV_ID
+			FROM
+				TB_BBSVIEWERLOG bvw
+			LEFT JOIN VIEW_USERMASTER usr ON bvw.ESNTL_ID = usr.ESNTL_ID
+			LEFT JOIN TB_AUTHORGROUPINFO grp ON usr.GROUP_ID = grp.GROUP_ID
+			LEFT JOIN TB_ORGNZTINFO org ON grp.ORGNZT_ID = org.ORGNZT_ID
+			WHERE
+			1 = 1
+			<if test="nttId != null and nttId != 0">
+				AND
+				bvw.NTT_ID = #{nttId}
+				<if test="esntlId != null and esntlId neq ''">
+					AND
+			    	bvw.ESNTL_ID = #{esntlId}
+				</if>
+			</if>
+			<include refid="searchArticleViewer"/>
+		) AS cnt
+	</select>
+
+	<!-- 게시판열람자이력 상세-->
+	<select id="selectBbsViewerDetail" parameterType="BbsViewerLogVO" resultType="BbsViewerLogVO">
+		SELECT
+			bvw.BV_ID,
+			bvw.ESNTL_ID,
+			bvw.NTT_ID,
+			bvw.FRST_REGIST_PNTTM,
+			usr.USER_NM,
+			usr.USER_ID,
+			usr.GROUP_ID,
+			grp.GROUP_NM,
+			org.ORGNZT_NM
+		FROM
+			TB_BBSVIEWERLOG bvw
+				LEFT JOIN VIEW_USERMASTER usr ON bvw.ESNTL_ID = usr.ESNTL_ID
+				LEFT JOIN TB_AUTHORGROUPINFO grp ON usr.GROUP_ID = grp.GROUP_ID
+				LEFT JOIN TB_ORGNZTINFO org ON grp.GROUP_ID = org.ORGNZT_ID
+		WHERE
+			bvw.BV_ID = #{bvId}
+	</select>
+
+	<!-- 게시판열람자이력 추가-->
+	<insert id="insertBbsViewer" parameterType="BbsViewerLogVO">
+		<selectKey keyProperty="bvId" resultType="java.lang.Integer" order="BEFORE">
+			SELECT IFNULL(MAX(BV_ID),0)+1 AS BV_ID  FROM TB_BBSVIEWERLOG
+		</selectKey>
+
+		INSERT INTO TB_BBSVIEWERLOG ( BV_ID, ESNTL_ID, NTT_ID, FRST_REGIST_PNTTM )
+		VALUES
+		       (#{bvId},#{esntlId},#{nttId},now())
+	</insert>
+
+	<!-- 게시판열람자이력 수정-->
+	<update id="updateBbsViewer" parameterType="BbsViewerLogVO">
+		UPDATE TB_BBSVIEWERLOG
+		SET ESNTL_ID = #{esntlId},
+			NTT_ID = #{nttId},
+			FRST_REGIST_PNTTM = #{frstRegistPnttm}
+		WHERE
+			BV_ID = #{bvId}
+	</update>
+
+	<!-- 게시판열람자이력 삭제-->
+	<delete id="deleteBbsViewer" parameterType="BbsViewerLogVO">
+		DELETE FROM TB_BBSVIEWERLOG
+		WHERE
+		    NTT_ID = #{nttId}
+	</delete>
+
+
+	<!-- 게시판열람자권한 목록-->
+	<select id="selectBbsViewerAuthList" parameterType="BbsViewerAuthVO" resultType="egovMap">
+		SELECT
+			bva.BVA_ID,
+			bva.ESNTL_ID,
+			bva.NTT_ID,
+			DATE_FORMAT(bva.FRST_REGIST_PNTTM,'%Y.%m.%d. %r') AS FRST_REGIST_PNTTM,
+			usr.USER_NM,
+			usr.USER_ID,
+			usr.GROUP_ID,
+			grp.GROUP_NM,
+			org.ORGNZT_NM
+		FROM
+			TB_BBSVIEWERAUTH bva
+		LEFT JOIN VIEW_USERMASTER usr ON bva.ESNTL_ID = usr.ESNTL_ID
+		LEFT JOIN TB_AUTHORGROUPINFO grp ON usr.GROUP_ID = grp.GROUP_ID
+		LEFT JOIN TB_ORGNZTINFO org ON grp.ORGNZT_ID = org.ORGNZT_ID
+		WHERE
+		1 = 1
+		<if test="nttId != null and nttId != 0">
+			AND
+			bva.NTT_ID = #{nttId}
+		</if>
+		ORDER BY bva.FRST_REGIST_PNTTM DESC
+	</select>
+
+	<!-- 게시판열람자권한 추가-->
+	<insert id="insertBbsViewerAuth" parameterType="BbsViewerAuthVO">
+		<selectKey keyProperty="bvaId" resultType="java.lang.Integer" order="BEFORE">
+			SELECT IFNULL(MAX(BVA_ID),0)+1 AS BVA_ID  FROM TB_BBSVIEWERAUTH
+		</selectKey>
+
+		INSERT INTO TB_BBSVIEWERAUTH ( BVA_ID, ESNTL_ID, NTT_ID, FRST_REGIST_PNTTM )
+		VALUES
+		(#{bvaId},#{esntlId},#{nttId},now())
+	</insert>
+
+	<!-- 게시판열람자권한 수정-->
+	<update id="updateBbsViewerAuth" parameterType="BbsViewerAuthVO">
+		UPDATE TB_BBSVIEWERAUTH
+		SET ESNTL_ID = #{esntlId},
+			NTT_ID = #{nttId},
+			FRST_REGIST_PNTTM = #{frstRegistPnttm}
+		WHERE
+			BVA_ID = #{bvaId}
+	</update>
+
+	<!-- 게시판열람자권한 삭제-->
+	<delete id="deleteBbsViewerAuth" parameterType="BbsViewerAuthVO">
+		DELETE FROM TB_BBSVIEWERAUTH
+		WHERE
+			BVA_ID = #{bvaId}
+	</delete>
+
+	<!-- 게시판열람자권한 삭제-->
+	<delete id="deleteBbsViewerAuthByNttId" parameterType="BbsViewerAuthVO">
+		DELETE FROM TB_BBSVIEWERAUTH
+		WHERE
+			NTT_ID = #{nttId}
+	</delete>
+</mapper>

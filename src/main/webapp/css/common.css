@@ -1,0 +1,8 @@
+#dt-basic tbody td {
+    min-width: 100px;
+}
+.dataTables-scroll {
+    display: block;
+    overflow: auto;
+    height: 300px;
+}

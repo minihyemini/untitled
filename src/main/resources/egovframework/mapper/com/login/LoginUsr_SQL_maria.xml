@@ -1,0 +1,426 @@
+<?xml version="1.0" encoding="UTF-8"?><!-- 
+	수정일                 수정자                          수정내용
+  =========     =======    =================================================
+  2011.8.26   	서준식     	 	SSO 로그인을 위한 쿼리 추가
+  2011.09.27    서준식              컬럼 변경 SUB_DN 을  CRTFC_DN_VALUE 로 변경
+  2011.09.28    서준식              컬럼 변경 entrprsmber_id 을  ENTRPRS_MBER_ID 로 변경
+-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="jisungsoft.com.repository.LoginMapper">
+	
+	<!-- SSO용 ESNTL_ID를 이용한 로그인(2011.8.26) -->
+	<select id="ssoLoginByEsntlId" resultType="LoginVO">
+		<!-- 일반회원 -->
+		<if test="userSe != null and userSe == 'GNR'">
+
+			SELECT
+				MBER_ID AS id
+				, MBER_NM AS name
+				, PASSWORD AS password
+				, MBER_EMAIL_ADRES AS email
+				, 'GNR' AS userSe
+				, ESNTL_ID AS uniqId
+			FROM 
+				TB_GNRLMBER
+			WHERE 
+				ESNTL_ID = #{uniqId}
+			AND MBER_STTUS_CODE = 'P'
+			
+		</if>
+		<!-- 기업회원 -->
+		<if test="userSe != null and userSe == 'ENT'">
+
+			SELECT 
+				ENTRPRS_MBER_ID AS id
+				, ENTRPRS_MBER_NM AS name
+				, ENTRPRS_MBER_PASSWORD AS password
+				, ENTRPRS_MBER_EMAIL_ADRES AS email
+				, 'ENT' AS userSe
+				, ESNTL_ID AS uniqId
+			FROM 
+				TB_ENTRPRSMBER
+			WHERE 
+				ESNTL_ID = #{uniqId}
+			AND ENTRPRS_MBER_STTUS = 'P'
+			
+		</if>
+		<!-- 업무사용자 -->
+		<if test="userSe != null and userSe == 'USR'">
+
+			SELECT 
+				EMPLYR_ID AS id
+				, EMPLYR_NM AS name
+				, PASSWORD AS password
+				, EMAIL_ADRES AS email
+				, 'USR' AS userSe
+				, ESNTL_ID AS uniqId
+			FROM
+				TB_EMPLYRINFO
+			WHERE 
+				ESNTL_ID = #{uniqId}
+			AND EMPLYR_STTUS_CODE = 'P'
+
+		</if>
+	</select>
+	
+	<!-- 일반 로그인 -->
+	<select id="actionLogin" resultType="LoginVO">
+		<!-- 일반회원 -->
+		<if test="userSe != null and userSe == 'GNR'">
+		
+			SELECT
+				MBER_ID AS id
+				, MBER_NM AS name
+				, PASSWORD AS password
+				, MBER_EMAIL_ADRES AS email
+				, 'GNR' AS userSe
+				, ESNTL_ID AS uniqId
+				, AUTHOR_CODE AS authority
+			FROM
+				TB_GNRLMBER A LEFT OUTER JOIN TB_EMPLYRSCRTYESTBS B ON A.ESNTL_ID = B.SCRTY_DTRMN_TRGET_ID
+			WHERE 
+				MBER_ID = #{id}
+			AND PASSWORD = #{password}
+			AND MBER_STTUS_CODE = 'P'
+					
+		</if>
+		<!-- 기업회원 -->
+		<if test="userSe != null and userSe == 'ENT'">
+		
+			SELECT 
+				ENTRPRS_MBER_ID AS id
+				, ENTRPRS_MBER_NM AS name
+				, ENTRPRS_MBER_PASSWORD AS password
+				, ENTRPRS_MBER_EMAIL_ADRES AS email
+				, 'ENT' AS userSe
+				, ESNTL_ID AS uniqId
+				, AUTHOR_CODE AS authority
+			FROM 
+				TB_ENTRPRSMBER A LEFT OUTER JOIN TB_EMPLYRSCRTYESTBS B ON A.ESNTL_ID = B.SCRTY_DTRMN_TRGET_ID
+			WHERE 
+				ENTRPRS_MBER_ID = #{id}
+			AND ENTRPRS_MBER_PASSWORD = #{password}
+			AND ENTRPRS_MBER_STTUS = 'P'
+						
+		</if>
+		<!-- 업무사용자 -->
+		<if test="userSe != null and userSe == 'USR'">
+
+			SELECT 
+				EMPLYR_ID AS id
+				, EMPLYR_NM AS name
+				, PASSWORD AS password
+				, EMAIL_ADRES AS email
+				, 'USR' AS userSe
+				, ESNTL_ID AS uniqId
+				, AUTHOR_CODE AS authority
+			FROM
+				TB_EMPLYRINFO A LEFT OUTER JOIN TB_EMPLYRSCRTYESTBS B ON A.ESNTL_ID = B.SCRTY_DTRMN_TRGET_ID
+			WHERE 
+				EMPLYR_ID = #{id}
+			AND PASSWORD = #{password}
+			AND EMPLYR_STTUS_CODE = 'P'
+
+		</if>
+	</select>
+		
+	<!-- 아이디 찾기 -->
+	<select id="searchId" resultType="LoginVO">
+		<!-- 일반회원 -->
+		<if test="userSe != null and userSe == 'GNR'">
+
+			SELECT
+				ESNTL_ID AS uniqId,
+				MBER_ID AS id,
+				MBER_NM as name,
+				MBER_EMAIL_ADRES as email,
+			    MBTLNUM as mbtlnum,
+				'GNR' as userSe,
+				MBER_TYPE as mberType,
+				SBSCRB_DE as sbscrbDe
+			FROM
+				TB_GNRLMBER
+			WHERE
+				MBER_NM = #{name}
+			  <choose>
+				  <when test="email != null and email neq ''">
+					  AND
+					  MBER_EMAIL_ADRES = #{email}
+				  </when>
+				  <when test="mbtlnum != null and mbtlnum neq ''">
+					  AND
+					  MBTLNUM = #{mbtlnum}
+				  </when>
+				  <when test="id != null and id neq ''">
+						AND
+						MBER_ID = #{id}
+				  </when>
+			  </choose>
+
+		</if>
+		<!-- 기업회원 -->
+		<if test="userSe != null and userSe == 'ENT'">
+
+			SELECT
+				ESNTL_ID AS uniqId,
+				ENTRPRS_MBER_ID AS id,
+				ENTRPRS_MBER_NM as name,
+				ENTRPRS_MBER_EMAIL_ADRES as email,
+					'ENT' as userSe,
+					'' as mberType,
+				SBSCRB_DE as sbscrbDe
+			FROM
+				TB_ENTRPRSMBER
+			WHERE
+				ENTRPRS_MBER_EMAIL_ADRES = #{email}
+			AND
+			ENTRPRS_MBER_NM = #{name}
+			<if test="id != null and id neq ''">
+				AND
+					ENTRPRS_MBER_ID = #{id}
+			</if>
+
+		</if>
+		<!-- 업무사용자 -->
+		<if test="userSe != null and userSe == 'USR'">
+
+			SELECT
+				ESNTL_ID AS uniqId,
+				EMPLYR_ID AS id,
+				EMPLYR_NM as name,
+				EMAIL_ADRES as email,
+				'USR' as userSe,
+				'' as mberType,
+				SBSCRB_DE as sbscrbDe
+			FROM
+				TB_EMPLYRINFO
+			WHERE
+				EMAIL_ADRES = #{email}
+			AND
+				EMPLYR_NM = #{name}
+			<if test="id != null and id neq ''">
+				AND
+					ESNTL_ID = #{id}
+			</if>
+
+		</if>
+	</select>
+	
+	<!-- 비밀번호 찾기 -->
+	<select id="searchPassword" resultType="LoginVO">
+		<!-- 일반회원 -->
+		<if test="userSe != null and userSe == 'GNR'">
+
+			SELECT 
+				PASSWORD AS password
+			FROM 
+				TB_GNRLMBER
+			WHERE 
+				MBER_ID = #{id}
+			AND MBER_NM = #{name}
+			AND MBER_EMAIL_ADRES = #{email}
+			AND MBER_STTUS_CODE = 'P'
+			
+		</if>
+		<!-- 기업회원 -->
+		<if test="userSe != null and userSe == 'ENT'">
+
+			SELECT 
+				ENTRPRS_MBER_PASSWORD AS password
+			FROM 
+				TB_ENTRPRSMBER
+			WHERE 
+				ENTRPRS_MBER_ID = #{id}
+			AND ENTRPRS_MBER_NM = #{name}
+			AND ENTRPRS_MBER_EMAIL_ADRES = #{email}
+			AND ENTRPRS_MBER_STTUS = 'P'
+			
+		</if>
+		<!-- 업무사용자 -->
+		<if test="userSe != null and userSe == 'USR'">
+
+			SELECT 
+				PASSWORD AS password
+			FROM 
+				TB_EMPLYRINFO
+			WHERE 
+				EMPLYR_ID = #{id}
+			AND EMPLYR_NM = #{name}
+			AND EMAIL_ADRES = #{email}
+			AND EMPLYR_STTUS_CODE = 'P'
+			
+		</if>
+	</select>
+
+	<!-- 변경된 비밀번호를 저장 -->
+	<update id="updatePassword">
+		<!-- 일반회원 -->
+		<if test="userSe != null and userSe == 'GNR'">
+
+			UPDATE  TB_GNRLMBER
+				SET PASSWORD = #{password}
+			WHERE MBER_ID = #{id}
+			
+		</if>
+		<!-- 기업회원 -->
+		<if test="userSe != null and userSe == 'ENT'">
+
+			UPDATE  TB_ENTRPRSMBER
+				SET ENTRPRS_MBER_PASSWORD = #{password}
+			WHERE ENTRPRS_MBER_ID = #{id}
+			
+		</if>
+		<!-- 업무사용자 -->
+		<if test="userSe != null and userSe == 'USR'">
+
+			UPDATE  TB_EMPLYRINFO
+				SET PASSWORD = #{password}
+			WHERE EMPLYR_ID = #{id}
+			
+		</if>
+	</update>
+	
+	<!-- 로그인인증제한 조회 -->
+	<select id="selectLoginIncorrect" resultType="egovMap">
+	<!-- 일반회원 -->
+	<if test="userSe != null and userSe == 'GNR'">
+	<![CDATA[
+	SELECT  MBER_ID AS USER_ID
+         ,  PASSWORD AS USER_PW
+	     ,  MBER_NM AS USER_NM
+	     ,  ESNTL_ID AS UNIQ_ID
+	     ,  IFNULL(LOCK_AT,'N') LOCK_AT
+	     ,  IFNULL(LOCK_CNT,0) AS LOCK_CNT
+     FROM  TB_GNRLMBER
+	 WHERE
+	 	MBER_ID = #{id} 
+	]]>
+	</if>
+	<!-- 기업회원 -->
+	<if test="userSe != null and userSe == 'ENT'">
+	<![CDATA[
+	SELECT  ENTRPRS_MBER_ID AS USER_ID
+         ,  ENTRPRS_MBER_PASSWORD  AS USER_PW
+	     ,  ENTRPRS_MBER_NM AS USER_NM
+	     ,  ESNTL_ID AS UNIQ_ID
+	     ,  IFNULL(LOCK_AT,'N') LOCK_AT
+	     ,  IFNULL(LOCK_CNT,0) AS LOCK_CNT
+     FROM  TB_ENTRPRSMBER
+	 WHERE  ENTRPRS_MBER_ID = #{id} 
+	]]>
+	</if>
+	<!-- 업무사용자 -->
+	<if test="userSe != null and userSe == 'USR'">
+	<![CDATA[
+	SELECT  EMPLYR_ID AS USER_ID
+         ,  PASSWORD AS USER_PW
+	     ,  EMPLYR_NM AS USER_NM
+	     ,  ESNTL_ID AS UNIQ_ID
+	     ,  IFNULL(LOCK_AT,'N') LOCK_AT
+	     ,  IFNULL(LOCK_CNT,0) AS LOCK_CNT
+     FROM  TB_EMPLYRINFO
+	 WHERE  EMPLYR_ID = #{id} 
+	]]>
+	</if>
+	</select>
+
+	<update id="updateLoginIncorrect">
+		<choose>
+			<when test="USER_SE == 'GNR'">
+				<!-- LOCK 해제 -->
+				<if test="@egovframework.com.cmm.util.EgovMybaitsUtil@isEquals(updateAt,'E')">
+					<![CDATA[
+			UPDATE  TB_GNRLMBER
+			   SET  LOCK_AT = NULL
+			     ,  LOCK_CNT  = NULL
+			     ,  LOCK_LAST_PNTTM = NULL
+			   WHERE MBER_ID = #{id}
+			]]>
+				</if>
+				<!-- LOCK 설정 -->
+				<if test="@egovframework.com.cmm.util.EgovMybaitsUtil@isEquals(updateAt,'L')">
+					<![CDATA[
+			UPDATE  TB_GNRLMBER
+			   SET  LOCK_AT = 'Y'
+			     ,  LOCK_CNT  = LOCK_CNT+1
+			     ,  LOCK_LAST_PNTTM = sysdate()
+		      WHERE MBER_ID = #{id}
+			]]>
+				</if>
+				<!-- LOCK 카운트 설정 -->
+				<if test="@egovframework.com.cmm.util.EgovMybaitsUtil@isEquals(updateAt,'C')">
+					<![CDATA[
+			UPDATE  TB_GNRLMBER
+			   SET  LOCK_CNT  = IFNULL(LOCK_CNT,0)+1
+			     ,  LOCK_LAST_PNTTM = sysdate()
+			   WHERE MBER_ID = #{id}
+			]]>
+				</if>
+			</when>
+			<when test="USER_SE == 'USR'">
+				<!-- LOCK 해제 -->
+				<if test="@egovframework.com.cmm.util.EgovMybaitsUtil@isEquals(updateAt,'E')">
+					<![CDATA[
+			UPDATE  TB_EMPLYRINFO
+			   SET  LOCK_AT = NULL
+			     ,  LOCK_CNT  = NULL
+			     ,  LOCK_LAST_PNTTM = NULL
+			   WHERE EMPLYR_ID = #{id}
+			]]>
+				</if>
+				<!-- LOCK 설정 -->
+				<if test="@egovframework.com.cmm.util.EgovMybaitsUtil@isEquals(updateAt,'L')">
+					<![CDATA[
+			UPDATE  TB_EMPLYRINFO
+			   SET  LOCK_AT = 'Y'
+			     ,  LOCK_CNT  = LOCK_CNT+1
+			     ,  LOCK_LAST_PNTTM = sysdate()
+			   WHERE EMPLYR_ID = #{id}
+			]]>
+				</if>
+				<!-- LOCK 카운트 설정 -->
+				<if test="@egovframework.com.cmm.util.EgovMybaitsUtil@isEquals(updateAt,'C')">
+					<![CDATA[
+			UPDATE  TB_EMPLYRINFO
+			   SET  LOCK_CNT  = IFNULL(LOCK_CNT,0)+1
+			     ,  LOCK_LAST_PNTTM = sysdate()
+			   WHERE EMPLYR_ID = #{id}
+			]]>
+				</if>
+			</when>
+			<otherwise>
+				<!-- LOCK 해제 -->
+				<if test="@egovframework.com.cmm.util.EgovMybaitsUtil@isEquals(updateAt,'E')">
+					<![CDATA[
+			UPDATE  TB_ENTRPRSMBER
+			   SET  LOCK_AT = NULL
+			     ,  LOCK_CNT  = NULL
+			     ,  LOCK_LAST_PNTTM = NULL
+			   WHERE ENTRPRS_MBER_ID = #{id}
+			]]>
+				</if>
+				<!-- LOCK 설정 -->
+				<if test="@egovframework.com.cmm.util.EgovMybaitsUtil@isEquals(updateAt,'L')">
+					<![CDATA[
+			UPDATE  TB_ENTRPRSMBER
+			   SET  LOCK_AT = 'Y'
+			     ,  LOCK_CNT  = LOCK_CNT+1
+			     ,  LOCK_LAST_PNTTM = sysdate()
+			   WHERE ENTRPRS_MBER_ID = #{id}
+			]]>
+				</if>
+				<!-- LOCK 카운트 설정 -->
+				<if test="@egovframework.com.cmm.util.EgovMybaitsUtil@isEquals(updateAt,'C')">
+					<![CDATA[
+			UPDATE  TB_ENTRPRSMBER
+			   SET  LOCK_CNT  = IFNULL(LOCK_CNT,0)+1
+			     ,  LOCK_LAST_PNTTM = sysdate()
+			   WHERE ENTRPRS_MBER_ID = #{id}
+			]]>
+				</if>
+			</otherwise>
+		</choose>
+	</update>
+	
+</mapper>

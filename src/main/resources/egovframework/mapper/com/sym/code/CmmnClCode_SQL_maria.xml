@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+		"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="jisungsoft.com.repository.sym.CmmnClCodeMapper">
+
+	<sql id="searchCmmnClCode">
+		<if test="@egovframework.com.cmm.util.EgovMybaitsUtil@isNotEmpty(searchKeyword)">
+			<if test="searchCondition eq 0">
+				AND(
+				CL.CL_CODE LIKE CONCAT ('%', #{searchKeyword},'%')
+				OR
+				CL.CL_CODE_NM LIKE CONCAT ('%', #{searchKeyword},'%')
+				)
+			</if>
+			<if test="searchCondition eq 1">
+				AND
+				CL.CL_CODE LIKE CONCAT ('%', #{searchKeyword},'%')
+			</if>
+			<if test="searchCondition eq 2">
+				AND
+				CL.CL_CODE_NM LIKE CONCAT ('%', #{searchKeyword},'%')
+			</if>
+		</if>
+	</sql>
+
+	<select id="selectCmmnClCodeList" resultType="CmmnClCode">
+
+		SELECT  CL.CL_CODE
+     		 ,  CL.CL_CODE_NM
+		     ,  CL.USE_AT
+			 ,	CL.FRST_REGIST_PNTTM
+			 ,	CL.FRST_REGISTER_ID
+			 ,	CL.LAST_UPDT_PNTTM
+			 ,	CL.LAST_UPDUSR_ID
+			 ,	(SELECT USER_ID FROM view_usermaster usr WHERE usr.ESNTL_ID = CL.FRST_REGISTER_ID) as FRST_REGISTER_USER_ID
+			 ,	(SELECT USER_ID FROM view_usermaster usr WHERE usr.ESNTL_ID = CL.LAST_UPDUSR_ID) as LAST_UPDUSR_USER_ID
+		  FROM  TB_CMMNCLCODE cl
+		 WHERE  1 = 1
+		<if test="useAt != null and useAt neq ''">
+			AND  CL.USE_AT = #{useAt}
+		</if>
+		<include refid="searchCmmnClCode"/>
+		 ORDER  BY CL.FRST_REGIST_PNTTM
+		 LIMIT  #{recordCountPerPage} OFFSET #{firstIndex}
+
+	</select>
+
+	<select id="selectCmmnClCodeListCnt" resultType="java.lang.Integer">
+
+		SELECT  COUNT(*) totcnt
+		  FROM  TB_CMMNCLCODE
+		 WHERE  1 = 1
+		   <if test="useAt != null and useAt neq ''">
+		   AND  USE_AT = #{useAt}
+		   </if>
+		<include refid="searchCmmnClCode"/>
+	</select>
+
+	<select id="selectCmmnClCodeAllList" resultType="CmmnClCode">
+
+		SELECT  CL.CL_CODE
+			,	CL.CL_CODE_NM
+			,	CL.USE_AT
+			,	CL.FRST_REGIST_PNTTM
+			,	CL.FRST_REGISTER_ID
+			,	CL.LAST_UPDT_PNTTM
+			,	CL.LAST_UPDUSR_ID
+			,	(SELECT USER_ID FROM view_usermaster usr WHERE usr.ESNTL_ID = CL.FRST_REGISTER_ID) as FRST_REGISTER_USER_ID
+			,	(SELECT USER_ID FROM view_usermaster usr WHERE usr.ESNTL_ID = CL.LAST_UPDUSR_ID) as LAST_UPDUSR_USER_ID
+		FROM  TB_CMMNCLCODE CL
+		WHERE  1 = 1
+		<if test="useAt != null and useAt neq ''">
+			AND  CL.USE_AT = #{useAt}
+		</if>
+		<include refid="searchCmmnClCode"/>
+		ORDER  BY CL.FRST_REGIST_PNTTM
+	</select>
+
+	<select id="selectCmmnClCodeDetail" resultType="CmmnClCode">
+		SELECT  CL.CL_CODE
+			 ,  CL.CL_CODE_NM
+			 ,  CL.CL_CODE_DC
+			 ,  CL.USE_AT
+		  FROM  TB_CMMNCLCODE cl
+		 WHERE  1=1
+		   AND  CL_CODE  = #{clCode}
+	</select>
+
+	<insert id="insertCmmnClCode">
+		INSERT INTO  TB_CMMNCLCODE
+		(  CL_CODE
+		,  CL_CODE_NM
+		,  CL_CODE_DC
+		,  USE_AT
+		,  FRST_REGIST_PNTTM
+		,  FRST_REGISTER_ID
+		)
+		VALUES
+		(  #{clCode}
+		,  #{clCodeNm}
+		,  #{clCodeDc}
+		,  #{useAt}
+		,  sysdate()
+		,  #{frstRegisterId}
+		)
+	</insert>
+
+	<update id="updateCmmnClCode">
+		UPDATE  TB_CMMNCLCODE
+		   SET  CL_CODE_NM        = #{clCodeNm}
+		     ,  CL_CODE_DC        = #{clCodeDc}
+		     ,  USE_AT            = #{useAt}
+		     ,  LAST_UPDT_PNTTM = sysdate()
+		     ,  LAST_UPDUSR_ID    = #{lastUpdusrId}
+	     WHERE  CL_CODE           = #{clCode}
+	</update>
+
+	<update id="updateCmmnClCodeNonUse">
+		UPDATE  TB_CMMNCLCODE
+		   SET  USE_AT            = 'N'
+		     ,  LAST_UPDT_PNTTM   = sysdate()
+		     ,  LAST_UPDUSR_ID    = #{lastUpdusrId}
+		 WHERE  USE_AT            = 'Y'
+           AND  CL_CODE          != #{clCode}
+	</update>
+
+	<delete id="deleteCmmnClCode" >
+		DELETE
+		  FROM  TB_CMMNCLCODE
+		 WHERE  CL_CODE = #{clCode}
+	</delete>
+</mapper>

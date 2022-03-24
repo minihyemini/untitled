@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.0.xsd">
+
+    <!--메일발신 관리-->
+    <bean name="egovMailMsgIdGnrService" class="egovframework.rte.fdl.idgnr.impl.EgovTableIdGnrServiceImpl" destroy-method="destroy">
+        <property name="dataSource" ref="egov.dataSource" />
+        <property name="strategy"   ref="mailMsgtrategy" />
+        <property name="blockSize"  value="10"/>
+        <property name="table"      value="TB_COPSEQ"/>
+        <property name="tableName"  value="MAILMSG_ID"/>
+    </bean>
+    <bean name="mailMsgtrategy" class="egovframework.rte.fdl.idgnr.impl.strategy.EgovIdGnrStrategyImpl">
+        <property name="prefix"   value="MAILMSG_" />
+        <property name="cipers"   value="12" />
+        <property name="fillChar" value="0" />
+    </bean> 
+
+    <!--메일발신 템플릿-->
+    <bean name="egovMailTmpIdGnrService" class="egovframework.rte.fdl.idgnr.impl.EgovTableIdGnrServiceImpl" destroy-method="destroy">
+        <property name="dataSource" ref="egov.dataSource" />
+        <property name="strategy"   ref="mailTmptrategy" />
+        <property name="blockSize"  value="10"/>
+        <property name="table"      value="TB_COPSEQ"/>
+        <property name="tableName"  value="MAILTMP_ID"/>
+    </bean>
+    <bean name="mailTmptrategy" class="egovframework.rte.fdl.idgnr.impl.strategy.EgovIdGnrStrategyImpl">
+        <property name="prefix"   value="MAILTMP_" />
+        <property name="cipers"   value="12" />
+        <property name="fillChar" value="0" />
+    </bean>
+</beans>

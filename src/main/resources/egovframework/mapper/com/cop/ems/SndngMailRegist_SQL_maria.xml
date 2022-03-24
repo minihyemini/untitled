@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?><!--Converted at: Wed May 11 15:49:53 KST 2016-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="sndngMailRegistDAO">
+
+	<insert id="insertSndngMail" parameterType="SndngMailVO">
+
+        INSERT INTO TB_EMAILDSPTCHMANAGE
+        (
+            MSSAGE_ID,
+            EMAIL_CN,
+            SNDR,
+            RCVER,
+            SJ,
+            SNDNG_RESULT_CODE,
+            DSPTCH_DT,
+            ATCH_FILE_ID
+        ) VALUES (
+             #{mssageId},
+             #{emailCn},
+             #{dsptchPerson},
+             #{recptnPerson},
+             #{sj},
+             #{sndngResultCode},
+             sysdate(),
+             #{atchFileId}
+        )
+
+    </insert>
+
+    <update id="updateSndngMail" parameterType="SndngMailVO">
+
+        UPDATE TB_EMAILDSPTCHMANAGE
+        SET
+            SNDNG_RESULT_CODE = #{sndngResultCode}
+        WHERE
+            MSSAGE_ID = #{mssageId}
+
+    </update>
+</mapper>

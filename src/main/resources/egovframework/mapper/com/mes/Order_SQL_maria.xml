@@ -1,0 +1,459 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+		"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="jisungsoft.com.repository.mes.OrderMapper">
+	<sql id="searchRequestOrder">
+		<if test="@egovframework.com.cmm.util.EgovMybaitsUtil@isNotEmpty(searchKeyword)">
+			<if test="searchCondition eq 0">
+
+			</if>
+			<if test="searchCondition eq 1">
+
+			</if>
+		</if>
+		<if test="@egovframework.com.cmm.util.EgovMybaitsUtil@isNotEmpty(searchDate)">
+			AND DATE_FORMAT(A.FRST_REGIST_PNTTM, '%Y%m%d') = DATE_FORMAT(#{searchDate}, '%Y%m%d')
+		</if>
+		<if test="ordLotNo != null and ordLotNo neq ''">
+			AND A.ORD_LOT_NO = #{ordLotNo}
+		</if>
+	</sql>
+
+	<sql id="searchRequestOrderItem">
+		<if test="@egovframework.com.cmm.util.EgovMybaitsUtil@isNotEmpty(searchKeyword)">
+			<if test="searchCondition eq 0">
+
+			</if>
+			<if test="searchCondition eq 1">
+
+			</if>
+		</if>
+		<if test="ordId != null">
+			AND A.ORD_ID = #{ordId}
+		</if>
+		<if test="oiId != null">
+			AND A.OI_ID = #{oiId}
+		</if>
+	</sql>
+
+	<sql id="searchClientOrder">
+		<if test="@egovframework.com.cmm.util.EgovMybaitsUtil@isNotEmpty(searchKeyword)">
+			AND A.CLT_ID = #{searchKeyword}
+		</if>
+		<if test="@egovframework.com.cmm.util.EgovMybaitsUtil@isNotEmpty(searchDate)">
+			AND DATE_FORMAT(B.FRST_REGIST_PNTTM, '%Y%m%d') = DATE_FORMAT(#{searchDate}, '%Y%m%d')
+		</if>
+	</sql>
+
+	<select id="selectClientOrderListAll" resultType="Order">
+		SELECT
+			A.ORD_ID
+			, A.ORD_LOT_NO
+			, A.ORD_NUM
+			, A.ORD_TYPE
+			, A.ORD_STATUS
+			, (SELECT CODE_NM FROM TB_CMMNDETAILCODE WHERE CODE = A.ORD_STATUS) AS ORD_STATUS_NM
+			, A.ORD_CATEGORY
+			, (SELECT CODE_NM FROM TB_CMMNDETAILCODE WHERE CODE = A.ORD_CATEGORY) AS ORD_CATEGORY_NM
+			, A.ORDER_DATE
+			, A.ORD_DUEDATE
+			, A.ORD_DLVRSCHDT
+			, A.ESNTL_ID
+			, A.FRST_REGIST_PNTTM
+			, A.FRST_REGISTER_ID
+			, (SELECT USER_ID FROM view_usermaster WHERE ESNTL_ID = A.FRST_REGISTER_ID) AS FRST_REGISTER_USER_ID
+			, A.LAST_UPDT_PNTTM
+			, A.LAST_UPDUSR_ID
+			, (SELECT USER_ID FROM view_usermaster WHERE ESNTL_ID = A.LAST_UPDUSR_ID) AS LAST_UPDUSR_USER_ID
+			, A.MATODRQST_ID
+			, A.PD_ID
+			, A.MAT_ID
+			, A.ORD_DESC
+		    , (SELECT COUNT(1) FROM TB_ORDERITEM WHERE ORD_ID = A.ORD_ID) as QUNTY
+			, B.CLT_ID
+			, B.CLT_CODE
+			, B.CLT_NM
+			, B.CLT_OWNRNM
+			, B.CLT_TYPE
+			, B.CLT_BUSSTYPE
+			, B.CLT_BUSSNUM
+			, B.CLT_CPRTNUM
+			, B.CLT_ZIP
+			, B.CLT_ADDR
+			, B.CLT_DETAIL_ADDR
+			, B.CLT_TELNO
+			, B.CLT_FAXNUM
+			, B.CLT_EMAIL
+			, B.CLT_SETUPDT
+			, B.CLT_DLBEGINDT
+			, B.CLT_DLENDT
+			, B.CLT_DEADLNDT
+		FROM TB_ORDER A LEFT OUTER JOIN TB_CLIENT B ON A.CLT_ID = B.CLT_ID
+		WHERE
+			A.ORD_TYPE = #{ordType}
+		<include refid="searchClientOrder"/>
+		ORDER BY B.CLT_NM ASC, A.FRST_REGIST_PNTTM DESC
+	</select>
+
+	<select id="selectClientOrderListMap" resultType="egovMap">
+		SELECT
+			A.ORD_ID
+			, A.ORD_LOT_NO
+			, A.ORD_NUM
+			, A.ORD_TYPE
+			, A.ORD_STATUS
+			, (SELECT CODE_NM FROM TB_CMMNDETAILCODE WHERE CODE = A.ORD_STATUS) AS ORD_STATUS_NM
+			, A.ORD_CATEGORY
+			, (SELECT CODE_NM FROM TB_CMMNDETAILCODE WHERE CODE = A.ORD_CATEGORY) AS ORD_CATEGORY_NM
+			, A.ORDER_DATE
+			, A.ORD_DUEDATE
+			, A.ORD_DLVRSCHDT
+			, A.ESNTL_ID
+			, A.FRST_REGIST_PNTTM
+			, A.FRST_REGISTER_ID
+			, (SELECT USER_ID FROM view_usermaster WHERE ESNTL_ID = A.FRST_REGISTER_ID) AS FRST_REGISTER_USER_ID
+			, A.LAST_UPDT_PNTTM
+			, A.LAST_UPDUSR_ID
+			, (SELECT USER_ID FROM view_usermaster WHERE ESNTL_ID = A.LAST_UPDUSR_ID) AS LAST_UPDUSR_USER_ID
+			, A.MATODRQST_ID
+			, A.PD_ID
+			, A.MAT_ID
+			, A.ORD_DESC
+			, (SELECT COUNT(1) FROM TB_ORDERITEM WHERE ORD_ID = A.ORD_ID) as QUNTY
+			, B.CLT_ID
+			, B.CLT_CODE
+			, B.CLT_NM
+			, B.CLT_OWNRNM
+			, B.CLT_TYPE
+			, B.CLT_BUSSTYPE
+			, B.CLT_BUSSNUM
+			, B.CLT_CPRTNUM
+			, B.CLT_ZIP
+			, B.CLT_ADDR
+			, B.CLT_DETAIL_ADDR
+			, B.CLT_TELNO
+			, B.CLT_FAXNUM
+			, B.CLT_EMAIL
+			, B.CLT_SETUPDT
+			, B.CLT_DLBEGINDT
+			, B.CLT_DLENDT
+			, B.CLT_DEADLNDT
+		FROM TB_ORDER A LEFT OUTER JOIN TB_CLIENT B ON A.CLT_ID = B.CLT_ID
+		WHERE
+			A.ORD_TYPE = #{ordType}
+		<include refid="searchClientOrder"/>
+		ORDER BY B.CLT_NM ASC, A.FRST_REGIST_PNTTM DESC
+	</select>
+
+	<select id="selectRequestOrderListAll" resultType="Order">
+		SELECT
+			A.ORD_ID
+			, A.ORD_LOT_NO
+			, A.ORD_NUM
+			, A.ORD_TYPE
+            , A.ORD_STATUS
+			, (SELECT CODE_NM FROM TB_CMMNDETAILCODE WHERE CODE = A.ORD_STATUS) AS ORD_STATUS_NM
+            , A.ORD_CATEGORY
+			, (SELECT CODE_NM FROM TB_CMMNDETAILCODE WHERE CODE = A.ORD_CATEGORY) AS ORD_CATEGORY_NM
+            , A.QUNTY
+            , A.ORDER_DATE
+            , A.ORD_DUEDATE
+            , A.ORD_DLVRSCHDT
+            , A.ESNTL_ID
+            , A.FRST_REGIST_PNTTM
+            , A.FRST_REGISTER_ID
+			, (SELECT USER_ID FROM view_usermaster WHERE ESNTL_ID = A.FRST_REGISTER_ID) AS FRST_REGISTER_USER_ID
+            , A.LAST_UPDT_PNTTM
+            , A.LAST_UPDUSR_ID
+			, (SELECT USER_ID FROM view_usermaster WHERE ESNTL_ID = A.LAST_UPDUSR_ID) AS LAST_UPDUSR_USER_ID
+            , A.CLT_ID
+            , A.MATODRQST_ID
+            , A.PD_ID
+            , A.MAT_ID
+            , A.ORD_DESC
+		FROM
+			TB_ORDER A LEFT OUTER JOIN TB_CLIENT B ON A.CLT_ID = B.CLT_ID
+		WHERE
+			1 = 1
+		<include refid="searchRequestOrder"/>
+	</select>
+
+	<select id="selectRequestOrderDetail" resultType="Order">
+		SELECT
+			A.ORD_ID
+			 , A.ORD_LOT_NO
+			 , A.ORD_NUM
+			 , A.ORD_TYPE
+			 , A.ORD_STATUS
+			 , (SELECT CODE_NM FROM TB_CMMNDETAILCODE WHERE CODE = A.ORD_STATUS) AS ORD_STATUS_NM
+			 , A.ORD_CATEGORY
+			 , (SELECT CODE_NM FROM TB_CMMNDETAILCODE WHERE CODE = A.ORD_CATEGORY) AS ORD_CATEGORY_NM
+			 , A.QUNTY
+			 , A.ORDER_DATE
+			 , A.ORD_DUEDATE
+			 , A.ORD_DLVRSCHDT
+			 , A.ESNTL_ID
+			 , A.FRST_REGIST_PNTTM
+			 , A.FRST_REGISTER_ID
+			 , (SELECT USER_ID FROM view_usermaster WHERE ESNTL_ID = A.FRST_REGISTER_ID) AS FRST_REGISTER_USER_ID
+			 , A.LAST_UPDT_PNTTM
+			 , A.LAST_UPDUSR_ID
+			 , (SELECT USER_ID FROM view_usermaster WHERE ESNTL_ID = A.LAST_UPDUSR_ID) AS LAST_UPDUSR_USER_ID
+			 , A.MATODRQST_ID
+			 , A.PD_ID
+			 , A.MAT_ID
+			 , A.ORD_DESC
+			 , B.CLT_ID
+			 , B.CLT_CODE
+			 , B.CLT_NM
+			 , B.CLT_OWNRNM
+			 , B.CLT_TYPE
+			 , B.CLT_BUSSTYPE
+			 , B.CLT_BUSSNUM
+			 , B.CLT_CPRTNUM
+			 , B.CLT_ZIP
+			 , B.CLT_ADDR
+			 , B.CLT_DETAIL_ADDR
+			 , B.CLT_TELNO
+			 , B.CLT_FAXNUM
+			 , B.CLT_EMAIL
+			 , B.CLT_SETUPDT
+			 , B.CLT_DLBEGINDT
+			 , B.CLT_DLENDT
+			 , B.CLT_DEADLNDT
+		FROM
+			TB_ORDER A LEFT OUTER JOIN TB_CLIENT B ON A.CLT_ID = B.CLT_ID
+		WHERE
+			A.ORD_ID = #{ordId} AND A.CLT_ID = #{cltId}
+			<include refid="searchRequestOrder"/>
+	</select>
+
+	<select id="selectRequestOrderItemListAll" resultType="Order">
+		SELECT A.OI_ID
+			, A.ORD_ID
+			, A.PDNUM_ID
+			, A.UNIT_PRICE
+			, A.QUNTY
+			, A.SURTAX_AT
+			, A.SURTAX_RATE
+			, B.ORD_LOT_NO
+			, B.ORD_NUM
+			, B.ORD_TYPE
+			, B.ORD_STATUS
+			, B.ORDER_DATE
+			, B.ORD_DUEDATE
+			, B.ORD_DLVRSCHDT
+			, B.ESNTL_ID
+			, C.PDNUM_ID
+			, C.PDNUM_NUM
+			, C.PDNUM_NM
+			, C.PDNUM_TYPE
+			, C.PDNUM_WGHT
+			, C.PDNUM_STND
+			, C.PDNUM_SFSTCK
+			, C.PDNUM_CODE
+			, C.PDNUM_MTRSCODE
+			, C.PDNUM_IOTYPE
+			, C.PDNUM_DRWAPPLDATE
+			, C.PDNUM_DRWQNTY
+			, C.PDNUM_UNIT
+		FROM
+			TB_ORDERITEM A LEFT OUTER JOIN TB_ORDER B ON A.ORD_ID = B.ORD_ID
+			LEFT OUTER JOIN TB_PDNUM C ON A.PDNUM_ID = C.PDNUM_ID
+		WHERE
+		      1 = 1
+		<include refid="searchRequestOrderItem"/>
+		ORDER BY A.OI_ID DESC
+	</select>
+
+	<select id="selectRequestOrderItemDetail" resultType="Order">
+		SELECT A.OI_ID
+			 , A.ORD_ID
+			 , A.PDNUM_ID
+			 , A.UNIT_PRICE
+			 , A.QUNTY
+			 , A.SURTAX_AT
+			 , A.SURTAX_RATE
+			 , B.ORD_LOT_NO
+			 , B.ORD_NUM
+			 , B.ORD_TYPE
+			 , B.ORD_STATUS
+			 , B.ORDER_DATE
+			 , B.ORD_DUEDATE
+			 , B.ORD_DLVRSCHDT
+			 , B.ESNTL_ID
+			 , C.PDNUM_ID
+			 , C.PDNUM_NUM
+			 , C.PDNUM_NM
+			 , C.PDNUM_TYPE
+			 , C.PDNUM_WGHT
+			 , C.PDNUM_STND
+			 , C.PDNUM_SFSTCK
+			 , C.PDNUM_CODE
+			 , C.PDNUM_MTRSCODE
+			 , C.PDNUM_IOTYPE
+			 , C.PDNUM_DRWAPPLDATE
+			 , C.PDNUM_DRWQNTY
+			 , C.PDNUM_UNIT
+		FROM
+			TB_ORDERITEM A LEFT OUTER JOIN TB_ORDER B ON A.ORD_ID = B.ORD_ID
+			LEFT OUTER JOIN TB_PDNUM C ON A.PDNUM_ID = C.PDNUM_ID
+		WHERE
+			A.OI_ID = #{oiId}
+		<include refid="searchRequestOrderItem"/>
+	</select>
+
+	<select id="selectRequestOrderListCnt" resultType="java.lang.Integer">
+		SELECT COUNT(1) FROM (
+			SELECT
+				A.ORD_ID
+			FROM
+			TB_ORDER A LEFT OUTER JOIN TB_CLIENT B ON A.CLT_ID = B.CLT_ID
+			<include refid="searchRequestOrder"/>
+		 ) as cnt
+	</select>
+
+	<select id="selectOrderNextId" resultType="java.lang.Integer">
+		SELECT COUNT(1)+1 AS cnt FROM TB_ORDER
+	</select>
+
+	<select id="selectRequestOrderItemListCnt" resultType="java.lang.Integer">
+		SELECT COUNT(1) FROM (
+			SELECT
+			    A.OI_ID
+			FROM TB_ORDERITEM A
+			LEFT OUTER JOIN TB_ORDER B ON A.ORD_ID = B.ORD_ID
+			LEFT OUTER JOIN TB_PDNUM C ON A.PDNUM_ID = C.PDNUM_ID
+		) as cnt
+	</select>
+
+	<insert id="insertRequestOrder" useGeneratedKeys="true" keyProperty="ordId">
+		<selectKey keyProperty="ordId" resultType="java.lang.Integer" order="BEFORE">
+			SELECT IFNULL(MAX(ORD_ID),0)+1 AS ORD_ID  FROM TB_ORDER
+		</selectKey>
+
+		INSERT INTO TB_ORDER (
+			ORD_ID
+			, ORD_LOT_NO
+			, ORD_NUM
+			, ORD_TYPE
+			, ORD_STATUS
+			, ORD_CATEGORY
+			, QUNTY
+			, ORDER_DATE
+			, ORD_DUEDATE
+			, ORD_DLVRSCHDT
+			, ESNTL_ID
+			, FRST_REGIST_PNTTM
+			, FRST_REGISTER_ID
+			, CLT_ID
+			, MATODRQST_ID
+			, PD_ID
+			, MAT_ID
+			, ORD_DESC
+		) VALUES (
+			#{ordId}
+			, #{ordLotNo}
+			, #{ordNum}
+			, #{ordType}
+			, #{ordStatus}
+			, #{ordCategory}
+			, #{qunty}
+			, #{orderDate}
+			, #{ordDuedate}
+			, #{ordDlvrschdt}
+			, #{esntlId}
+			, now()
+			, #{frstRegisterId}
+			, #{cltId}
+			, #{matodrqstId}
+			, #{pdId}
+			, #{matId}
+			, #{ordDesc}
+		)
+	</insert>
+
+	<insert id="insertRequestOrderItem" useGeneratedKeys="true" keyProperty="oiId">
+		<selectKey keyProperty="oiId" resultType="java.lang.Integer" order="BEFORE">
+			SELECT IFNULL(MAX(OI_ID),0)+1 AS OI_ID  FROM TB_ORDERITEM
+		</selectKey>
+
+		INSERT INTO TB_ORDERITEM (
+			OI_ID
+			, ORD_ID
+			, PDNUM_ID
+			, UNIT_PRICE
+			, QUNTY
+			, SURTAX_AT
+			, SURTAX_RATE
+		) VALUES (
+			#{oiId}
+			, #{ordId}
+			, #{pdnumId}
+			, #{unitPrice}
+			, #{qunty}
+			, #{surtaxAt}
+			, #{surtaxRate}
+		)
+	</insert>
+
+	<update id="updateRequestOrder">
+		UPDATE
+			TB_ORDER
+		SET
+			ORD_NUM = #{ordNum}
+			, ORD_LOT_NO = #{ordLotNo}
+			, ORD_TYPE = #{ordType}
+			, ORD_STATUS = #{ordStatus}
+			, ORD_CATEGORY = #{ordCategory}
+			, QUNTY = #{qunty}
+			, ORDER_DATE = #{orderDate}
+			, ORD_DUEDATE = #{ordDuedate}
+			, ORD_DLVRSCHDT = #{ordDlvrschdt}
+			, ESNTL_ID = #{esntlId}
+			, LAST_UPDT_PNTTM = now()
+			, LAST_UPDUSR_ID = #{lastUpdusrId}
+			, CLT_ID = #{cltId}
+			, MATODRQST_ID = #{matodrqstId}
+			, PD_ID = #{pdId}
+			, MAT_ID = #{matId}
+			, ORD_DESC = #{ordDesc}
+		WHERE
+			ORD_ID = #{ordId}
+	</update>
+
+	<update id="updateRequestOrderItem">
+		UPDATE
+			TB_ORDERITEM
+		SET
+			ORD_ID = #{ordId}
+			, PDNUM_ID = #{pdnumId}
+			, UNIT_PRICE = #{unitPrice}
+			, QUNTY = #{qunty}
+			, SURTAX_AT = #{surtaxAt}
+			, SURTAX_RATE = #{surtaxRate}
+		WHERE
+			OI_ID = #{oiId}
+	</update>
+
+	<delete id="deleteRequestOrder">
+		DELETE FROM
+			TB_ORDER
+		WHERE
+			ORD_ID = #{ordId}
+	</delete>
+
+	<delete id="deleteRequestOrderItem">
+		DELETE FROM
+			TB_ORDERITEM
+		WHERE
+			OI_ID = #{oiId}
+	</delete>
+
+	<delete id="deleteRequestOrderByCltId">
+		DELETE FROM
+			TB_ORDER
+		WHERE
+			CLT_ID = #{cltId}
+	</delete>
+</mapper>

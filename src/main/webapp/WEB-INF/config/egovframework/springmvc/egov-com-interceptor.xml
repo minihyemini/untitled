@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:context="http://www.springframework.org/schema/context"
+    xmlns:mvc="http://www.springframework.org/schema/mvc"
+    xmlns:p="http://www.springframework.org/schema/p"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+        http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd
+        http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-4.0.xsd">
+
+	<bean id="egov.propertyConfigurer" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<property name="locations">
+			<list>
+				<value>classpath:/egovframework/egovProps/globals.properties</value>
+			</list>
+		</property>
+	</bean>
+
+    <beans profile="security">
+	    <mvc:interceptors>
+	        <mvc:interceptor>
+				<mvc:mapping path="/**/*.do" />
+				<mvc:exclude-mapping path="/cmm/*.do"/>
+				<mvc:exclude-mapping path="/cmm/*.json"/>
+				<mvc:exclude-mapping path="/successAuth.do"/>
+				<mvc:exclude-mapping path="/logoutAction.do"/>
+				<mvc:exclude-mapping path="/loginAction.do"/>
+<!--				<mvc:exclude-mapping path="/mes/gnr/login.do"/>-->
+<!--				<mvc:exclude-mapping path="/mes/usr/login.do"/>-->
+<!--				<mvc:exclude-mapping path="/mes/ent/login.do"/>-->
+
+	            <bean class="jisungsoft.com.cmm.interceptor.AuthenticInterceptor">
+		           	<!-- 관리자 권한 Ant style Pattern List -->
+					<property name="adminAuthPatternList">
+						<list>
+							<!-- 관리자 -->
+							<value></value>
+						</list>
+					</property>
+
+					<!-- Login Pattern-->
+					<property name="loginAuthPatternList">
+						<list>
+							<!--업무사용자 view-->
+							<value>${Globals.UsrLoginPage}</value>
+							<!--일반사용자 view-->
+							<value>${Globals.GnrLoginPage}</value>
+							<!--기업사용자 view-->
+							<value>${Globals.EntLoginPage}</value>
+						</list>
+					</property>
+	            </bean>
+	        </mvc:interceptor>
+
+			<mvc:interceptor>
+				<mvc:mapping path="/mes/**/*.do" />
+				<mvc:mapping path="/sym/**/*.do" />
+
+				<bean class="jisungsoft.com.cmm.interceptor.IpObtainInterceptor"/>
+			</mvc:interceptor>
+	    </mvc:interceptors>
+	</beans>
+</beans>
